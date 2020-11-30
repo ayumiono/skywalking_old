@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="maven-antrun-" default="main"  >
+<target name="main">
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="maven.runtime.classpath"/>
+  <if>
+    <equals arg2="jar" arg1="pom"/>
+    <then>
+      <mkdir dir="D:\git_repo\skywalking-8.1.0-src\apache-skywalking-apm-8.1.0\apm-sniffer\apm-sdk-plugin\light4j-plugins\target/../../../../../skywalking-agent/plugins"/>
+      <copy file="D:\git_repo\skywalking-8.1.0-src\apache-skywalking-apm-8.1.0\apm-sniffer\apm-sdk-plugin\light4j-plugins\target/light4j-plugins-8.1.0.jar" tofile="D:\git_repo\skywalking-8.1.0-src\apache-skywalking-apm-8.1.0\apm-sniffer\apm-sdk-plugin\light4j-plugins\target/../../../../../skywalking-agent/plugins/light4j-plugins-8.1.0.jar" overwrite="true"/>
+    </then>
+  </if>
+</target>
+</project>

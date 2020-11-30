@@ -1,0 +1,4 @@
+#Mon Nov 23 14:57:18 CST 2020
+configuration*?=759F3CC86DFE556B44B778E1B106FE0D378CBEF
+module-resource*?\:file\:/D\:/git_repo/skywalking-8.1.0-src/apache-skywalking-apm-8.1.0/apm-checkstyle/importControl.xml=ABFB67E42F7636913AA02614BA28721483B81EFC
+module-resource*?\:file\:/D\:/git_repo/skywalking-8.1.0-src/apache-skywalking-apm-8.1.0/apm-sniffer/optional-plugins/optional-spring-plugins/optional-spring-cloud/target/checkstyle-header.txt=A0116A1C782CF424D8C4A7D2B281B784D1435163
