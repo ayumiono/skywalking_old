@@ -26,12 +26,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class StorageModulePrometheusConfig extends ModuleConfig {
-	private String gatewayAddress;
-	private String user;
-	private String password;
-	
-	/**
-	 * test
-	 */
+
 	private String prometheusAddress;
+
+	private int prometheusHTTPServerPort;
+
+	private String prometheusHTTPServerHost;
 }

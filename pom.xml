@@ -104,6 +104,15 @@
             </modules>
         </profile>
         <profile>
+            <id>storage</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>server-storage-plugin</module>
+            </modules>
+        </profile>
+        <profile>
             <id>dist</id>
             <activation>
                 <activeByDefault>true</activeByDefault>

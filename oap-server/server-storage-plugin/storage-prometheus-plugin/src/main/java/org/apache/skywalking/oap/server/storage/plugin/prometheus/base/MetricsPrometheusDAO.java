@@ -1,8 +1,9 @@
 package org.apache.skywalking.oap.server.storage.plugin.prometheus.base;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.storage.IMetricsDAO;
@@ -15,16 +16,14 @@ import org.apache.skywalking.oap.server.library.util.prometheus.metrics.MetricFa
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapper;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.JSONParser;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
+@Slf4j
 public class MetricsPrometheusDAO implements IMetricsDAO {
-	
-	private static final Logger LOGGER = LoggerFactory.getLogger(MetricsPrometheusDAO.class);
 	
 	protected final StorageBuilder<Metrics> storageBuilder;
 	
@@ -34,17 +33,23 @@ public class MetricsPrometheusDAO implements IMetricsDAO {
 	
 	@Override
 	public List<Metrics> multiGet(Model model, List<String> ids) throws IOException {
-		JSONParser parser = new JSONParser(prometheusHttpApi.rangeQuery(model, ids, 0l,0l));
+		JSONParser parser = new JSONParser(prometheusHttpApi.query(model, ids));
 		MetricFamily metricFamily = parser.parse();
+		if(metricFamily == null) {
+			return Collections.emptyList();
+		}
 		
-		return metricFamily.getMetrics().stream().map(promeMetric->{
+		List<Metrics> result = new ArrayList<Metrics>();
+		
+		for(Metric promeMetric : metricFamily.getMetrics()) {
 			try {
-				return mapper.prometheusToSkywalking(model, promeMetric);
+				Metrics metrics = mapper.prometheusToSkywalking(model, promeMetric);
+				result.add(metrics);
 			} catch (Exception e) {
-				LOGGER.error(e.getMessage(),e);
+				log.error(e.getMessage(), e);
 			}
-			return (Metrics)null;
-		}).collect(Collectors.toList());
+		}
+		return result;
 	}
 	
 	@Override
@@ -53,9 +58,8 @@ public class MetricsPrometheusDAO implements IMetricsDAO {
 			MetricFamilySamples metricFamily = mapper.skywalkingToPrometheus(model, metrics);
 			return new PrometheusInsertRequest(metricFamily);
 		} catch (Exception e) {
-			LOGGER.error(e.getMessage(),e);
+			throw new IOException(e.getMessage(), e);
 		}
-		return null;
 	}
 
 	@Override

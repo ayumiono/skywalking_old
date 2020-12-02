@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,20 +32,17 @@ public class JSONParser {
 
 	public MetricFamily metricFamily;
 
-	public String name = "";
-	public String help = "";
 	public MetricType type = null;
-	public List<String> allowedNames = new ArrayList<>();
 	public List<PromeTextSample> samples = new ArrayList<>();
 
 	public MetricFamily parse() throws IOException {
 		json.getData().getResult().forEach(metric->{
 			if(metric.getValue() == null) {
 				metric.getValues().stream().forEach(value->{
-					samples.add(new PromeTextSample(metric.getMetric().get("__name__").toString(),metric.getMetric(), value[1].toString(), (long)value[0]));
+					samples.add(new PromeTextSample(metric.getMetric().get("__name__").toString(), metric.getMetric(), value[1].toString(), new BigDecimal((double)value[0]).multiply(new BigDecimal("1000")).longValue()));
 				});
 			}else {
-				samples.add(new PromeTextSample(metric.getMetric().get("__name__").toString(),metric.getMetric(), metric.getValue()[1].toString(), (long)metric.getValue()[0]));
+				samples.add(new PromeTextSample(metric.getMetric().get("__name__").toString(), metric.getMetric(), metric.getValue()[1].toString(), new BigDecimal((double)metric.getValue()[0]).multiply(new BigDecimal("1000")).longValue()));
 			}
 		});
 		end();
@@ -57,8 +55,7 @@ public class JSONParser {
 		}
 
 		MetricFamily.Builder metricFamilyBuilder = new MetricFamily.Builder();
-		metricFamilyBuilder.setName(name);
-		metricFamilyBuilder.setHelp(help);
+		metricFamilyBuilder.setName("");
 		metricFamilyBuilder.setType(type);
 
 		if (samples.size() < 1) {
@@ -67,12 +64,12 @@ public class JSONParser {
 		switch (type) {
 		case GAUGE:
 			samples.forEach(textSample -> metricFamilyBuilder
-					.addMetric(Gauge.builder().name(name).value(convertStringToDouble(textSample.getValue()))
+					.addMetric(Gauge.builder().name(textSample.getName()).value(convertStringToDouble(textSample.getValue()))
 							.labels(textSample.getLabels()).timestamp(textSample.timestamp).build()));
 			break;
 		case COUNTER:
 			samples.forEach(textSample -> metricFamilyBuilder
-					.addMetric(Counter.builder().name(name).value(convertStringToDouble(textSample.getValue()))
+					.addMetric(Counter.builder().name(textSample.getName()).value(convertStringToDouble(textSample.getValue()))
 							.labels(textSample.getLabels()).timestamp(textSample.timestamp).build()));
 			break;
 		case HISTOGRAM:
@@ -82,7 +79,7 @@ public class JSONParser {
 				return Pair.of(labels, sample);
 			}).collect(groupingBy(Pair::getLeft, mapping(Pair::getRight, toList()))).forEach((labels, samples) -> {
 				PromeHistogram.PromeHistogramBuilder hBuilder = PromeHistogram.builder();
-				hBuilder.name(name).timestamp(samples.get(0).timestamp);
+				hBuilder.name(samples.get(0).getName()).timestamp(samples.get(0).timestamp);
 				hBuilder.labels(labels);
 				samples.forEach(textSample -> {
 					if (textSample.getName().endsWith("_count")) {

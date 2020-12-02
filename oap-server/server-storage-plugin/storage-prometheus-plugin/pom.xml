@@ -42,6 +42,11 @@
 			<artifactId>simpleclient_pushgateway</artifactId>
 			<version>${prometheus.client.version}</version>
 		</dependency>
+		<dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_httpserver</artifactId>
+            <version>${prometheus.client.version}</version>
+        </dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -52,6 +57,13 @@
 					<skip>true</skip>
 				</configuration>
 			</plugin>
+			<plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
 		</plugins>
 	</build>
 </project>

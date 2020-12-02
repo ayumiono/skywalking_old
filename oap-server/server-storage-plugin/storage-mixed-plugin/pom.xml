@@ -40,6 +40,8 @@
 			<groupId>org.apache.skywalking</groupId>
 			<artifactId>storage-prometheus-plugin</artifactId>
 			<version>${project.version}</version>
+			<optional>true</optional>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.skywalking</groupId>
@@ -62,6 +64,13 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.rat</groupId>
+				<artifactId>apache-rat-plugin</artifactId>
 				<configuration>
 					<skip>true</skip>
 				</configuration>

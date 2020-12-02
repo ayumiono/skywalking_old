@@ -18,16 +18,15 @@ public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, Gauge>{
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, SumMetrics metrics) {
-		
 		try {
 			Map<String, String> labels = PrometheusMeterMapper.extractMetricsColumnValues(model, metrics);
 			
-			return new MetricFamilySamples(model.getName(), Type.GAUGE, "", 
+			return new MetricFamilySamples(model.getName(), Type.COUNTER, "", 
 					Collections.singletonList(
 							new Sample(
 									model.getName(), 
 									new ArrayList<>(labels.keySet()), new ArrayList<>(labels.values()), 
-									metrics.getValue(), 
+									0, 
 									TimeBucket.getTimestamp(metrics.getTimeBucket(), model.getDownsampling())
 									)));
 		} catch (Exception e) {

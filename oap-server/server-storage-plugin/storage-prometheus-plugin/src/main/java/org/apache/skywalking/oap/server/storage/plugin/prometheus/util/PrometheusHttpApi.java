@@ -1,9 +1,12 @@
 package org.apache.skywalking.oap.server.storage.plugin.prometheus.util;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.StringJoiner;
 
@@ -15,6 +18,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,11 +40,19 @@ public class PrometheusHttpApi {
 	private final String prometheusAddress;
 	public CloseableHttpClient client;
 	
+	final static DecimalFormat df = new DecimalFormat("#.000");
+	
 	private static final String RANGE = "/api/v1/query_range";
+	private static final String QUERY = "/api/v1/query";
 	
 	public PrometheusHttpApi(String prometheusAddress) {
 		this.prometheusAddress = prometheusAddress;
 		client = HttpClientBuilder.create().build();//FIXME
+	}
+	
+	public static String formatTimestamp(long timestamp) {
+		String ts = df.format(new BigDecimal(timestamp+"").divide(new BigDecimal("1000")).doubleValue());
+		return ts;
 	}
 	
 	public static class PromQLBuilder {
@@ -93,19 +105,26 @@ public class PrometheusHttpApi {
 		}
 	}
 	
+	public PrometheusHttpAPIRespBody rangeQuery(String name, Map<String, String> labels, long start) {
+		return rangeQuery(name, labels, start, System.currentTimeMillis());
+	}
+	
 	public PrometheusHttpAPIRespBody rangeQuery(String name, Map<String, String> labels, long start, long end) {
 		try {
-			URIBuilder uriBuilder = new URIBuilder(prometheusAddress+RANGE);
+			URIBuilder uriBuilder = new URIBuilder(prometheusAddress + RANGE);
 			
 			StringJoiner queryBuilder = new StringJoiner(",", name+"{", "}");
 			
-			for(Entry<String, String> label : labels.entrySet()) {
-				queryBuilder.add(label.getKey()+"="+label.getValue());
+			if(labels != null) {
+				for(Entry<String, String> label : labels.entrySet()) {
+					queryBuilder.add(label.getKey()+"="+label.getValue());
+				}
 			}
 			
 			uriBuilder.addParameter("query", queryBuilder.toString());
-			uriBuilder.addParameter("start", start+"");
-			uriBuilder.addParameter("end", end+"");
+			uriBuilder.addParameter("start", formatTimestamp(start));
+			uriBuilder.addParameter("end", formatTimestamp(end));
+			uriBuilder.addParameter("step", "60s");//FIXME
 			
 			HttpGet request = new HttpGet(uriBuilder.build());
 			
@@ -122,30 +141,47 @@ public class PrometheusHttpApi {
 		return null;
 	}
 	
-	public PrometheusHttpAPIRespBody rangeQuery(Model model, List<String> ids, long start, long end) {
+	public PrometheusHttpAPIRespBody query(Model model, List<String> ids) {
+		
+		PrometheusHttpAPIRespBody body = null;
+		
 		try {
-			URIBuilder uriBuilder = new URIBuilder(prometheusAddress+RANGE);
-			
-			String query = "{__name__=~\"" + model.getName() + ".*\",id=~\"" + StringUtils.join(ids, "|") +"\"}";
-			
-			
-			uriBuilder.addParameter("query", query);
-			uriBuilder.addParameter("start", start+"");
-			uriBuilder.addParameter("end", end+"");
-			
-			HttpGet request = new HttpGet(uriBuilder.build());
-			
-			CloseableHttpResponse response = client.execute(request);
-			
-			String responseStr = EntityUtils.toString(response.getEntity());
+			URIBuilder uriBuilder = new URIBuilder(prometheusAddress + QUERY);
 			
 			Gson gson = new Gson();
 			
-			return gson.fromJson(responseStr, PrometheusHttpAPIRespBody.class);
+			Map<String/*timestamp形如1606811026.446*/, Set<String>> tids = PrometheusMeterMapper.idAndTimestampTuple2(model, ids);
+			
+			for(Entry<String, Set<String>> entry : tids.entrySet()) {
+				String timestampStr = entry.getKey();
+				Set<String> _ids = entry.getValue();
+				uriBuilder.clearParameters();
+				
+				String query = "{__name__=~\"" + model.getName() + ".*\",id=~\"" + StringUtils.join(_ids, "|") +"\"}";
+				
+				uriBuilder.addParameter("query", query);
+				uriBuilder.addParameter("time", timestampStr);
+				
+				HttpGet request = new HttpGet(uriBuilder.build());
+				
+				CloseableHttpResponse response = client.execute(request);
+				
+				String responseStr = EntityUtils.toString(response.getEntity());
+				
+				
+				PrometheusHttpAPIRespBody child = gson.fromJson(responseStr, PrometheusHttpAPIRespBody.class);
+				if(child.status.equals("success") && child.data != null && child.data.result != null) {
+					if(body == null) {
+						body = child;
+					}else {
+						body.append(child);
+					}
+				}
+			}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage(),e);
 		}
-		return null;
+		return body;
 	}
 	
 	@Setter
@@ -158,6 +194,10 @@ public class PrometheusHttpApi {
 		@Override
 		public Iterator<Metric> iterator() {
 			return data.getResult().iterator();
+		}
+		
+		public void append(PrometheusHttpAPIRespBody source) {
+			this.data.getResult().addAll(source.getData().getResult());
 		}
 	}
 

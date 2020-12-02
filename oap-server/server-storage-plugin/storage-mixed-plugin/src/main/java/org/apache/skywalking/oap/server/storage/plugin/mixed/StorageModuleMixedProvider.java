@@ -36,6 +36,7 @@ import org.apache.skywalking.oap.server.library.module.ModuleDefine;
 import org.apache.skywalking.oap.server.library.module.ModuleManager;
 import org.apache.skywalking.oap.server.library.module.ModuleProvider;
 import org.apache.skywalking.oap.server.library.module.ModuleStartException;
+import org.apache.skywalking.oap.server.library.module.Service;
 import org.apache.skywalking.oap.server.library.module.ServiceNotProvidedException;
 import org.apache.skywalking.oap.server.storage.plugin.mixed.impl.IAggregationQueryDAOMixedImpl;
 import org.apache.skywalking.oap.server.storage.plugin.mixed.impl.IAlarmQueryDAOMixedImpl;
@@ -56,6 +57,9 @@ import org.apache.skywalking.oap.server.storage.plugin.mixed.impl.UITemplateMana
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class StorageModuleMixedProvider extends ModuleProvider {
 
 	private static final Logger logger = LoggerFactory.getLogger(StorageModuleMixedProvider.class);
@@ -96,7 +100,9 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 
 	@Override
 	public void start() throws ServiceNotProvidedException, ModuleStartException {
+		log.debug("{} sub dependencies provider prepared for mixed storage provider", dependenciesProvider.size());
 		for (ModuleProvider dependency : dependenciesProvider) {
+			log.debug("dependency {} start", dependency.name());
 			dependency.start();
 		}
 	}
@@ -145,24 +151,24 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 					}
 					loadedProvider.prepare();
 					
-					captureService(StorageDAO.class, loadedProvider.getService(StorageDAO.class));
-					captureService(IBatchDAO.class, loadedProvider.getService(IBatchDAO.class));
-					captureService(INetworkAddressAliasDAO.class, loadedProvider.getService(INetworkAddressAliasDAO.class));
-					captureService(IMetadataQueryDAO.class, loadedProvider.getService(IMetadataQueryDAO.class));
-					captureService(ITopologyQueryDAO.class, loadedProvider.getService(ITopologyQueryDAO.class));
-					captureService(IMetricsQueryDAO.class, loadedProvider.getService(IMetricsQueryDAO.class));
-					captureService(ITraceQueryDAO.class, loadedProvider.getService(ITraceQueryDAO.class));
-					captureService(IAggregationQueryDAO.class, loadedProvider.getService(IAggregationQueryDAO.class));
-					captureService(IAlarmQueryDAO.class, loadedProvider.getService(IAlarmQueryDAO.class));
-					captureService(ITopNRecordsQueryDAO.class, loadedProvider.getService(ITopNRecordsQueryDAO.class));
-					captureService(ILogQueryDAO.class, loadedProvider.getService(ILogQueryDAO.class));
-					captureService(IProfileTaskQueryDAO.class, loadedProvider.getService(IProfileTaskQueryDAO.class));
-					captureService(IProfileThreadSnapshotQueryDAO.class, loadedProvider.getService(IProfileThreadSnapshotQueryDAO.class));
-					captureService(IProfileTaskLogQueryDAO.class, loadedProvider.getService(IProfileTaskLogQueryDAO.class));
-					captureService(IHistoryDeleteDAO.class, loadedProvider.getService(IHistoryDeleteDAO.class));
-					captureService(UITemplateManagementDAO.class, loadedProvider.getService(UITemplateManagementDAO.class));
+					captureService(StorageDAO.class, loadedProvider);
+					captureService(IBatchDAO.class, loadedProvider);
+					captureService(INetworkAddressAliasDAO.class, loadedProvider);
+					captureService(IMetadataQueryDAO.class, loadedProvider);
+					captureService(ITopologyQueryDAO.class, loadedProvider);
+					captureService(IMetricsQueryDAO.class, loadedProvider);
+					captureService(ITraceQueryDAO.class, loadedProvider);
+					captureService(IAggregationQueryDAO.class, loadedProvider);
+					captureService(IAlarmQueryDAO.class, loadedProvider);
+					captureService(ITopNRecordsQueryDAO.class, loadedProvider);
+					captureService(ILogQueryDAO.class, loadedProvider);
+					captureService(IProfileTaskQueryDAO.class, loadedProvider);
+					captureService(IProfileThreadSnapshotQueryDAO.class, loadedProvider);
+					captureService(IProfileTaskLogQueryDAO.class, loadedProvider);
+					captureService(IHistoryDeleteDAO.class, loadedProvider);
+					captureService(UITemplateManagementDAO.class, loadedProvider);
+					dependenciesProvider.add(loadedProvider);
 				}
-				dependenciesProvider.add(loadedProvider);
 			} catch (Exception e) {
 				logger.error(e.getMessage(),e);
 			}
@@ -189,7 +195,13 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 	
 	@SuppressWarnings("unchecked")
 	private <T> Map<String, T> getServiceCandidates(Class<T> service) {
+		if(!cache.containsKey(service)) {
+			throw new ServiceNotProvidedException(service.getClass().getName() + " not provided");
+		}
 		Map<String, Object> candidates = cache.get(service);
+		if(candidates.size() == 0) {
+			throw new ServiceNotProvidedException(service.getClass().getName() + " not provided");
+		}
 		Map<String, T> rr = new HashMap<String, T>();
 		for(Entry<String, Object> candidate : candidates.entrySet()) {
 			rr.put(candidate.getKey(), (T)candidate.getValue());
@@ -197,15 +209,21 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 		return rr;
 	}
 	
-	private <T> void captureService(Class<T> service, T serviceImpl) {
+	private <T extends Service> void captureService(Class<T> serviceType, ModuleProvider provider) {
+		T serviceImpl = null;
+		try {
+			serviceImpl = provider.getService(serviceType);
+		} catch (Exception e) {
+			log.warn("{} provider not registry {} service implemention", provider.name(), serviceType.getName());
+		}
 		if(serviceImpl == null) return;
-		cache.computeIfAbsent(service, new Function<Class<?>, Map<String,Object>>() {
+		cache.computeIfAbsent(serviceType, new Function<Class<?>, Map<String,Object>>() {
 			@Override
 			public Map<String, Object> apply(Class<?> t) {
 				return new HashMap<String, Object>();
 			}
 		});
-		Map<String, Object> c = cache.get(service);
+		Map<String, Object> c = cache.get(serviceType);
 		c.put(loadedProvider.name(), serviceImpl);
 	}
 

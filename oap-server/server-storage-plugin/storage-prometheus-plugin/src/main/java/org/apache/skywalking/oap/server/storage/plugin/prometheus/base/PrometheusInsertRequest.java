@@ -13,6 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PrometheusInsertRequest implements InsertRequest, UpdateRequest {
 
+	@Getter
 	private final MetricFamilySamples metricFamily;
 	
 }
