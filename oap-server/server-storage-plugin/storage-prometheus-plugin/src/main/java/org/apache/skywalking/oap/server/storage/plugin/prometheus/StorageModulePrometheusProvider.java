@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.oap.server.core.CoreModule;
 import org.apache.skywalking.oap.server.core.annotation.AnnotationListener;
 import org.apache.skywalking.oap.server.core.annotation.AnnotationScan;
@@ -31,15 +30,13 @@ import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.Prometh
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.CustomCollectorRegistry;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
 
-import io.prometheus.client.exporter.BasicAuthHttpConnectionFactory;
 import io.prometheus.client.exporter.HTTPServer;
-import io.prometheus.client.exporter.PushGateway;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class StorageModulePrometheusProvider extends ModuleProvider {
 
 	private final StorageModulePrometheusConfig config;
+	
+	private CustomCollectorRegistry defaultRegistry;
 	
 	public StorageModulePrometheusProvider() {
 		super();
@@ -78,6 +75,8 @@ public class StorageModulePrometheusProvider extends ModuleProvider {
 		
 		PrometheusHttpApi api = new PrometheusHttpApi(config.getPrometheusAddress());
 		
+		
+		
 		//只需要注册以下几个服务实现
 		//StorageDAO
 		this.registerServiceImplementation(StorageDAO.class, new StoragePrometheusDao(config, builder.build()));
@@ -94,6 +93,7 @@ public class StorageModulePrometheusProvider extends ModuleProvider {
 	@Override
 	public void start() throws ServiceNotProvidedException, ModuleStartException {
 		try {
+			CustomCollectorRegistry.defaultRegistry.init(getManager());
 			new HTTPServer(new InetSocketAddress(config.getPrometheusHTTPServerHost(), config.getPrometheusHTTPServerPort()), CustomCollectorRegistry.defaultRegistry);
 		} catch (Exception e) {
 			throw new ModuleStartException(e.getMessage(), e);

@@ -6,8 +6,8 @@ import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +17,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.skywalking.oap.server.core.analysis.metrics.HistogramMetrics;
+import org.apache.skywalking.oap.server.core.analysis.metrics.PercentileMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapper;
 import org.slf4j.Logger;
@@ -156,8 +158,14 @@ public class PrometheusHttpApi {
 				String timestampStr = entry.getKey();
 				Set<String> _ids = entry.getValue();
 				uriBuilder.clearParameters();
-				
-				String query = "{__name__=~\"" + model.getName() + ".*\",id=~\"" + StringUtils.join(_ids, "|") +"\"}";
+				//_bucket, _sum, _count
+				boolean regx = HistogramMetrics.class.isAssignableFrom(model.getStorageModelClazz()) || PercentileMetrics.class.isAssignableFrom(model.getStorageModelClazz());
+				String query = "";
+				if(regx) {
+					query = "{__name__=~\"" + model.getName() + ".*\",id=~\"" + StringUtils.join(_ids, "|") +"\"}";
+				}else {
+					query = "{__name__=\"" + model.getName() + ".*\",id=~\"" + StringUtils.join(_ids, "|") +"\"}";
+				}
 				
 				uriBuilder.addParameter("query", query);
 				uriBuilder.addParameter("time", timestampStr);

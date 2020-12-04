@@ -2,26 +2,32 @@ package org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
-import org.apache.skywalking.oap.server.core.analysis.manual.relation.endpoint.EndpointRelationServerSideMetrics;
 import org.apache.skywalking.oap.server.core.analysis.manual.relation.instance.ServiceInstanceRelationClientSideMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Counter;
+import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(ServiceInstanceRelationClientSideMetrics.class)
-public class ServiceInstanceRelationClientSideMetricsMapper extends PrometheusMeterMapper<ServiceInstanceRelationClientSideMetrics, Counter> {
+public class ServiceInstanceRelationClientSideMetricsMapper extends PrometheusMeterMapper<ServiceInstanceRelationClientSideMetrics, Gauge> {
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, ServiceInstanceRelationClientSideMetrics metrics) {
 		try {
-			Map<String, String> labels = PrometheusMeterMapper.extractMetricsColumnValues(model, metrics);
-			
+			Map<String, String> labels = new HashMap<>();
+			labels.put(ServiceInstanceRelationClientSideMetrics.ENTITY_ID, metrics.getEntityId());
+            labels.put(ServiceInstanceRelationClientSideMetrics.SOURCE_SERVICE_ID, metrics.getSourceServiceId());
+            labels.put(ServiceInstanceRelationClientSideMetrics.SOURCE_SERVICE_INSTANCE_ID, metrics.getSourceServiceInstanceId());
+            labels.put(ServiceInstanceRelationClientSideMetrics.DEST_SERVICE_ID, metrics.getDestServiceId());
+            labels.put(ServiceInstanceRelationClientSideMetrics.DEST_SERVICE_INSTANCE_ID, metrics.getDestServiceInstanceId());
+            labels.put(ServiceInstanceRelationClientSideMetrics.COMPONENT_ID, metrics.getComponentId()+"");
 			return new MetricFamilySamples(model.getName(), Type.COUNTER, "", 
 					Collections.singletonList(
 							new Sample(
@@ -37,19 +43,22 @@ public class ServiceInstanceRelationClientSideMetricsMapper extends PrometheusMe
 	}
 
 	@Override
-	public ServiceInstanceRelationClientSideMetrics prometheusToSkywalking(Model model, Counter metric) {
+	public ServiceInstanceRelationClientSideMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
 		try {
+			Gauge metric = metricList.get(0);
 			ServiceInstanceRelationClientSideMetrics metrics = (ServiceInstanceRelationClientSideMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
+			Map<String, String> labels = metric.getLabels();
 			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
-			metrics.setComponentId(Integer.parseInt(metric.getLabels().get(EndpointRelationServerSideMetrics.COMPONENT_ID)));
-			metrics.setEntityId(metric.getLabels().get(EndpointRelationServerSideMetrics.ENTITY_ID));
-			metrics.setDestEndpoint(metric.getLabels().get(EndpointRelationServerSideMetrics.DEST_ENDPOINT));
-			metrics.setSourceEndpoint(metric.getLabels().get(EndpointRelationServerSideMetrics.SOURCE_ENDPOINT));
+			metrics.setEntityId(labels.get(ServiceInstanceRelationClientSideMetrics.ENTITY_ID));
+			metrics.setSourceServiceId(labels.get(ServiceInstanceRelationClientSideMetrics.SOURCE_SERVICE_ID));
+			metrics.setSourceServiceInstanceId(labels.get(ServiceInstanceRelationClientSideMetrics.SOURCE_SERVICE_INSTANCE_ID));
+			metrics.setDestServiceId(labels.get(ServiceInstanceRelationClientSideMetrics.DEST_SERVICE_ID));
+			metrics.setDestServiceInstanceId(labels.get(ServiceInstanceRelationClientSideMetrics.DEST_SERVICE_INSTANCE_ID));
+			metrics.setComponentId(Integer.parseInt(labels.get(ServiceInstanceRelationClientSideMetrics.COMPONENT_ID)));
 			return metrics;
 		} catch (Exception e) {
 			logger.error(e.getMessage(),e);
 			return null;
 		}
 	}
-
 }

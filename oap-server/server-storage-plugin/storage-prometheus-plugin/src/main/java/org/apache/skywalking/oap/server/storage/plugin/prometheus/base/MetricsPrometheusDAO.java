@@ -4,18 +4,23 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.storage.IMetricsDAO;
-import org.apache.skywalking.oap.server.core.storage.StorageBuilder;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
 import org.apache.skywalking.oap.server.library.client.request.InsertRequest;
 import org.apache.skywalking.oap.server.library.client.request.UpdateRequest;
 import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.MetricFamily;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapper;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.JSONParser;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.MetricFamily;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
+
+import com.google.gson.Gson;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class MetricsPrometheusDAO implements IMetricsDAO {
-	
-	protected final StorageBuilder<Metrics> storageBuilder;
 	
 	protected final PrometheusHttpApi prometheusHttpApi;
 	
@@ -41,12 +44,18 @@ public class MetricsPrometheusDAO implements IMetricsDAO {
 		
 		List<Metrics> result = new ArrayList<Metrics>();
 		
-		for(Metric promeMetric : metricFamily.getMetrics()) {
+		Map<String, List<Metric>> idGroup = metricFamily.getMetrics().stream().collect(Collectors.groupingBy(metrics->{
+			String id = metrics.getLabels().get("id");//FIXME 会不会有漏洞
+			return id;
+		}));
+		
+		for(Entry<String, List<Metric>> entry : idGroup.entrySet()) {
 			try {
-				Metrics metrics = mapper.prometheusToSkywalking(model, promeMetric);
+				Metrics metrics = mapper.prometheusToSkywalking(model, entry.getValue());
 				result.add(metrics);
 			} catch (Exception e) {
-				log.error(e.getMessage(), e);
+				log.error("model_name:" + model.getName() + " model_class:"+model.getStorageModelClazz().getName() 
+						+ " id:" + StringUtils.join(ids, ",") + e.getMessage(), e);
 			}
 		}
 		return result;
@@ -56,8 +65,12 @@ public class MetricsPrometheusDAO implements IMetricsDAO {
 	public InsertRequest prepareBatchInsert(Model model, Metrics metrics) throws IOException {
 		try {
 			MetricFamilySamples metricFamily = mapper.skywalkingToPrometheus(model, metrics);
+			//TODO
+			log.info("sw: {}, prometheus :{}", new Gson().toJson(metrics), new Gson().toJson(metricFamily));
 			return new PrometheusInsertRequest(metricFamily);
 		} catch (Exception e) {
+			log.error("model_name:" + model.getName() + " model_class:"+model.getStorageModelClazz().getName() 
+					+ e.getMessage(), e);
 			throw new IOException(e.getMessage(), e);
 		}
 	}

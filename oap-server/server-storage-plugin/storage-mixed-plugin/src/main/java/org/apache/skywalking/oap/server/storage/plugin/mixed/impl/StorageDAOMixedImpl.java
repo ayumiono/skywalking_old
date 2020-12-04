@@ -1,7 +1,6 @@
 package org.apache.skywalking.oap.server.storage.plugin.mixed.impl;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.skywalking.oap.server.core.analysis.MetricsExtension;
 import org.apache.skywalking.oap.server.core.analysis.config.NoneStream;
 import org.apache.skywalking.oap.server.core.analysis.management.ManagementData;
+import org.apache.skywalking.oap.server.core.analysis.manual.instance.InstanceTraffic;
+import org.apache.skywalking.oap.server.core.analysis.manual.networkalias.NetworkAddressAlias;
 import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.analysis.record.Record;
 import org.apache.skywalking.oap.server.core.storage.IManagementDAO;
@@ -153,6 +154,11 @@ public class StorageDAOMixedImpl implements StorageDAO {
 
 	
 	private ConcurrentHashMap<Class<?>, Boolean> cache = new ConcurrentHashMap<Class<?>, Boolean>();
+	/**
+	 * 满足下面条件的指标存到record存储（默认elasticsearch）
+	 * @param metricsClass
+	 * @return
+	 */
 	private boolean isNotSupportUpdate(Class<?> metricsClass) {
 		if(!cache.contains(metricsClass)) {
 			final MetricsExtension metricsExtension = metricsClass.getAnnotation(MetricsExtension.class);
@@ -162,7 +168,14 @@ public class StorageDAOMixedImpl implements StorageDAO {
 				cache.put(metricsClass, false);
 			}
 		}
-		return cache.get(metricsClass);
+		boolean isNotSupportUpdate = cache.get(metricsClass);
+		if(!isNotSupportUpdate) {
+			//硬编码指定类型
+			if(metricsClass == NetworkAddressAlias.class || metricsClass == InstanceTraffic.class) {
+				return true;
+			}
+		}
+		return isNotSupportUpdate;
 	}
 	
 }

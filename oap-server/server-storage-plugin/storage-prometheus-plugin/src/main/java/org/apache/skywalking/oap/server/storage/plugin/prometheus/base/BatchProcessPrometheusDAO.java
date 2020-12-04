@@ -12,18 +12,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.prometheus.client.Collector;
+import lombok.RequiredArgsConstructor;
 
-/**
- * TODO 需要将Collector包装成skywalking中的InsertRequest, PrepareRequest
- * @author Administrator
- */
+@RequiredArgsConstructor
 public class BatchProcessPrometheusDAO implements IBatchDAO {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(BatchProcessPrometheusDAO.class);
 	
 	@Override
 	public void asynchronous(InsertRequest insertRequest) {
-		new Collector() {//Custom Collectors
+		new Collector() {
 			@Override
 			public List<MetricFamilySamples> collect() {
 				return Collections.singletonList((MetricFamilySamples) insertRequest);
@@ -34,7 +32,7 @@ public class BatchProcessPrometheusDAO implements IBatchDAO {
 	@Override
 	public void synchronous(List<PrepareRequest> prepareRequests) {
 		try {
-			new Collector() {//Custom Collectors
+			new Collector() {
 				@Override
 				public List<MetricFamilySamples> collect() {
 					return prepareRequests.stream().map(prepareRequst->((PrometheusInsertRequest) prepareRequst).getMetricFamily()).collect(Collectors.toList());

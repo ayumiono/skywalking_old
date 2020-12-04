@@ -1,7 +1,6 @@
 package org.apache.skywalking.oap.server.storage.plugin.prometheus.base;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -10,8 +9,8 @@ import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.networkalias.NetworkAddressAlias;
 import org.apache.skywalking.oap.server.core.storage.cache.INetworkAddressAliasDAO;
 import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.MetricFamily;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.JSONParser;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.MetricFamily;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
 
 import lombok.RequiredArgsConstructor;

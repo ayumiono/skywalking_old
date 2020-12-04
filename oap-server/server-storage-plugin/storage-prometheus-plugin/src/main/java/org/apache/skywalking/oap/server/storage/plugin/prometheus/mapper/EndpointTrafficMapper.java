@@ -2,6 +2,8 @@ package org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
@@ -14,14 +16,13 @@ import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(EndpointTraffic.class)
+@Deprecated
 public class EndpointTrafficMapper extends PrometheusMeterMapper<EndpointTraffic, Counter>{
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, EndpointTraffic metrics) {
 		try {
-			
-			Map<String, String> labels = PrometheusMeterMapper.extractMetricsColumnValues(model, metrics);
-			
+			Map<String, String> labels = new HashMap<>();
 			labels.put(EndpointTraffic.NAME, metrics.getName());
 			labels.put(EndpointTraffic.SERVICE_ID, metrics.getServiceId());
 			
@@ -40,8 +41,9 @@ public class EndpointTrafficMapper extends PrometheusMeterMapper<EndpointTraffic
 	}
 
 	@Override
-	public EndpointTraffic prometheusToSkywalking(Model model, Counter metric) {
+	public EndpointTraffic prometheusToSkywalking(Model model, List<Counter> metricList) {
 		try {
+			Counter metric = metricList.get(0);
 			EndpointTraffic metrics = (EndpointTraffic) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 			metrics.setServiceId(metric.getLabels().get(EndpointTraffic.SERVICE_ID));
@@ -52,5 +54,4 @@ public class EndpointTrafficMapper extends PrometheusMeterMapper<EndpointTraffic
 			return null;
 		}
 	}
-
 }

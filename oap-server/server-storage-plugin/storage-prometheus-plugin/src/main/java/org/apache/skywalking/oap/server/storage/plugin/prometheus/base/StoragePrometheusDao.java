@@ -26,7 +26,7 @@ public class StoragePrometheusDao implements StorageDAO {
 
 	@Override
 	public IMetricsDAO newMetricsDao(StorageBuilder<Metrics> storageBuilder) {
-		return new MetricsPrometheusDAO(storageBuilder, new PrometheusHttpApi(config.getPrometheusAddress()), mapper);
+		return new MetricsPrometheusDAO(new PrometheusHttpApi(config.getPrometheusAddress()), mapper);
 	}
 
 	@Override

@@ -1,7 +1,9 @@
 package org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
@@ -19,14 +21,14 @@ public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, Gauge>{
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, SumMetrics metrics) {
 		try {
-			Map<String, String> labels = PrometheusMeterMapper.extractMetricsColumnValues(model, metrics);
+			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
 			
-			return new MetricFamilySamples(model.getName(), Type.COUNTER, "", 
+			return new MetricFamilySamples(model.getName(), Type.GAUGE, "", 
 					Collections.singletonList(
 							new Sample(
 									model.getName(), 
 									new ArrayList<>(labels.keySet()), new ArrayList<>(labels.values()), 
-									0, 
+									metrics.getValue(), 
 									TimeBucket.getTimestamp(metrics.getTimeBucket(), model.getDownsampling())
 									)));
 		} catch (Exception e) {
@@ -34,21 +36,30 @@ public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, Gauge>{
 			return null;
 		}
 	}
-
+	
 	@Override
-	public SumMetrics prometheusToSkywalking(Model model, Gauge metric) {
+	public SumMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
 		try {
+			Gauge metric = metricList.get(0);
 			SumMetrics metrics = (SumMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
+			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metric.getLabels());
 			
-			metrics.setValue(Long.parseLong(metric.getValue()+""));
-			
-			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
+			try {
+				setPersistenceColumns(model, metric, metrics);
+			} catch (Exception e) {
+				throw new PersistenceColumnsException(e.getMessage(), e);
+			}
 			
 			return metrics;
 		} catch (Exception e) {
 			logger.error(e.getMessage(),e);
 			return null;
 		}
+	}
+
+	public void setPersistenceColumns(Model model, Gauge metric, SumMetrics metrics) {
+		metrics.setValue(new BigDecimal(metric.getValue()).longValue());
+		metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 	}
 
 }

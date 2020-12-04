@@ -1,0 +1,84 @@
+{
+	"status": "success",
+	"data": {
+		"resultType": "vector",
+		"result": [
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00002-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test"
+				},
+				"value": [
+					1606955827.621,
+					"11"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00002-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"annotation": "summation"
+				},
+				"value": [
+					1606955827.621,
+					"33"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00002-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"annotation": "count"
+				},
+				"value": [
+					1606955827.621,
+					"3"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test"
+				},
+				"value": [
+					1606955827.621,
+					"4"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"annotation": "summation"
+				},
+				"value": [
+					1606955827.621,
+					"8"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"annotation": "count"
+				},
+				"value": [
+					1606955827.621,
+					"2"
+				]
+			}
+		]
+	}
+}

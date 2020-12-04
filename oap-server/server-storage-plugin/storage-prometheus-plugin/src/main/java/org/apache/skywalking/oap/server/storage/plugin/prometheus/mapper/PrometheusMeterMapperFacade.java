@@ -1,8 +1,10 @@
 package org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
 import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
@@ -41,17 +43,17 @@ public class PrometheusMeterMapperFacade extends PrometheusMeterMapper<Metrics, 
 	}
 
 	@Override
-	public Metrics prometheusToSkywalking(Model model, Metric metric) {
+	public Metrics prometheusToSkywalking(Model model, List<Metric> metricList) {
 		if(delegates.containsKey(model.getStorageModelClazz())) {
-			Metrics metrics = delegates.get(model.getStorageModelClazz()).prometheusToSkywalking(model, metric);
+			Metrics metrics = delegates.get(model.getStorageModelClazz()).prometheusToSkywalking(model, metricList);
 			if(metrics == null) {
-				throw new RuntimeException(model.getName() + " : " + metric.toString() + " null metrics");
+				throw new RuntimeException(model.getName() + " : " + StringUtils.join(metricList, ";") + " null metrics");
 			}
 			return metrics;
 		}else if(delegates.containsKey(model.getStorageModelClazz().getSuperclass())){
-			Metrics metrics = delegates.get(model.getStorageModelClazz().getSuperclass()).prometheusToSkywalking(model, metric);
+			Metrics metrics = delegates.get(model.getStorageModelClazz().getSuperclass()).prometheusToSkywalking(model, metricList);
 			if(metrics == null) {
-				throw new RuntimeException(model.getName() + " : " + metric.toString() + " null metrics");
+				throw new RuntimeException(model.getName() + " : " + StringUtils.join(metricList, ";") + " null metrics");
 			}
 			return metrics;
 		}else {

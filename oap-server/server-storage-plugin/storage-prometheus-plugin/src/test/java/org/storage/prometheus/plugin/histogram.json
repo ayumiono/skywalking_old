@@ -1,0 +1,227 @@
+{
+	"status": "success",
+	"data": {
+		"resultType": "vector",
+		"result": [
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "+Inf"
+				},
+				"value": [
+					1606955827.621,
+					"41"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.005"
+				},
+				"value": [
+					1606955827.621,
+					"0"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.01"
+				},
+				"value": [
+					1606955827.621,
+					"0"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.025"
+				},
+				"value": [
+					1606955827.621,
+					"0"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.05"
+				},
+				"value": [
+					1606955827.621,
+					"0"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.075"
+				},
+				"value": [
+					1606955827.621,
+					"0"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.1"
+				},
+				"value": [
+					1606955827.621,
+					"1"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.25"
+				},
+				"value": [
+					1606955827.621,
+					"1"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.5"
+				},
+				"value": [
+					1606955827.621,
+					"2"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "0.75"
+				},
+				"value": [
+					1606955827.621,
+					"4"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "1.0"
+				},
+				"value": [
+					1606955827.621,
+					"5"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "10.0"
+				},
+				"value": [
+					1606955827.621,
+					"41"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "2.5"
+				},
+				"value": [
+					1606955827.621,
+					"13"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "5.0"
+				},
+				"value": [
+					1606955827.621,
+					"21"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_bucket",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test",
+					"le": "7.5"
+				},
+				"value": [
+					1606955827.621,
+					"31"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_count",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test"
+				},
+				"value": [
+					1606955827.621,
+					"41"
+				]
+			},
+			{
+				"metric": {
+					"__name__": "histogram_test_sum",
+					"id": "00001-id",
+					"instance": "192.168.218.211:8119",
+					"job": "test"
+				},
+				"value": [
+					1606955827.621,
+					"198.74762469999996"
+				]
+			}
+		]
+	}
+}

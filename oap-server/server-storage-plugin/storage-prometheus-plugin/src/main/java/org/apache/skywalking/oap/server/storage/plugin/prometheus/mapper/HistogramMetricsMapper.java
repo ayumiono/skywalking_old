@@ -22,7 +22,7 @@ public class HistogramMetricsMapper extends PrometheusMeterMapper<HistogramMetri
 		try {
 			Type type = Type.HISTOGRAM;
 			String name = model.getName();
-			Map<String, String> labels = PrometheusMeterMapper.extractMetricsColumnValues(model, metrics);
+			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
 			long timestamp = TimeBucket.getTimestamp(metrics.getTimeBucket(), model.getDownsampling());
 			
 			List<Sample> samples = new ArrayList<>();
@@ -45,20 +45,34 @@ public class HistogramMetricsMapper extends PrometheusMeterMapper<HistogramMetri
 	}
 
 	@Override
-	public HistogramMetrics prometheusToSkywalking(Model model, PromeHistogram metric) {
+	public HistogramMetrics prometheusToSkywalking(Model model, List<PromeHistogram> metricList) {
 		try {
+			
+			PromeHistogram metric = metricList.get(0);
+			
 			HistogramMetrics metrics = (HistogramMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
-			DataTable dt = new DataTable(metric.getBuckets().size());
-				metric.getBuckets().entrySet().stream().forEach(entry->{
-				dt.put(entry.getKey()+"", entry.getValue());
-			});
-			metrics.setDataset(dt);
-			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
+			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metric.getLabels());
+			
+			try {
+				setPersistenceColumns(model, metric, metrics);
+			} catch (Exception e) {
+				throw new PersistenceColumnsException(e.getMessage(), e);
+			}
+			
 			return metrics;
-		
 		} catch (Exception e) {
+			logger.error(e.getMessage(),e);
 			return null;
 		}
+	}
+	
+	public void setPersistenceColumns(Model model, PromeHistogram metric, HistogramMetrics metrics) {
+		DataTable dt = new DataTable(metric.getBuckets().size());
+			metric.getBuckets().entrySet().stream().forEach(entry->{
+			dt.put(entry.getKey()+"", entry.getValue());
+		});
+		metrics.setDataset(dt);
+		metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 	}
 
 }

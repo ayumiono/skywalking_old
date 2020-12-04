@@ -30,7 +30,7 @@ public class PercentileMetricsMapper extends PrometheusMeterMapper<PercentileMet
 		try {
 			Type type = Type.SUMMARY;
 			String name = model.getName();
-			Map<String, String> labels = PrometheusMeterMapper.extractMetricsColumnValues(model, metrics);
+			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
 			long timestamp = TimeBucket.getTimestamp(metrics.getTimeBucket(), model.getDownsampling());
 			
 			List<Sample> samples = new ArrayList<>();
@@ -43,10 +43,11 @@ public class PercentileMetricsMapper extends PrometheusMeterMapper<PercentileMet
 			samples.add(sumSample);samples.add(countSample);
 			metrics.getPercentileValues().keys().forEach(key->{
 				long value = metrics.getPercentileValues().get(key);
-				labels.put("quantile", "p" + RANKS[Integer.parseInt(key)]);
+				labels.put("quantile", key);
 				Sample sample = new Sample(name, new ArrayList<>(labels.keySet()), new ArrayList<>(labels.values()), value, timestamp);
 				samples.add(sample);
 			});
+			labels.remove("quantile");
 			metrics.getDataset().keys().forEach(key->{
 				long value = metrics.getDataset().get(key);
 				labels.put("le", key);
@@ -59,21 +60,32 @@ public class PercentileMetricsMapper extends PrometheusMeterMapper<PercentileMet
 			return null;
 		}
 	}
-
+	
 	@Override
-	public PercentileMetrics prometheusToSkywalking(Model model, PromeSummary metric) {
+	public PercentileMetrics prometheusToSkywalking(Model model, List<PromeSummary> metricList) {
 		try {
+			PromeSummary metric = metricList.get(0);
 			PercentileMetrics metrics = (PercentileMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
+			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metric.getLabels());
 			
-			metrics.setDataset(toDataTable(metric.getDataset()));
-			metrics.setPercentileValues(toDataTable(metric.getQuantiles()));
-			metrics.setPrecision(metric.getPrecision());
-			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
+			try {
+				setPersistenceColumns(model, metric, metrics);
+			} catch (Exception e) {
+				throw new PersistenceColumnsException(e.getMessage(), e);
+			}
+			
 			return metrics;
 		} catch (Exception e) {
 			logger.error(e.getMessage(),e);
 			return null;
 		}
+	}
+
+	public void setPersistenceColumns(Model model, PromeSummary metric, PercentileMetrics metrics) {
+		metrics.setDataset(toDataTable(metric.getDataset()));
+		metrics.setPercentileValues(toDataTable(metric.getQuantiles()));
+		metrics.setPrecision(metric.getPrecision());
+		metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 	}
 	
 	private DataTable toDataTable(Map<String, Long> ds) {

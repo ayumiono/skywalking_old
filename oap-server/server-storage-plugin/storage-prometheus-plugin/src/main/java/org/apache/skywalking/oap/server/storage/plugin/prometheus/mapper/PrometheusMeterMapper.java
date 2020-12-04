@@ -37,13 +37,26 @@ public abstract class PrometheusMeterMapper<SWModel extends Metrics, PromeModel 
 	
 	final static DecimalFormat df = new DecimalFormat("#.000");
 	
-//	protected final StorageBuilder<Metrics> storageBuilder;
-
 	public abstract MetricFamilySamples skywalkingToPrometheus(Model model, SWModel metrics);
 	
-	public abstract SWModel prometheusToSkywalking(Model model, PromeModel metric);
+	public abstract SWModel prometheusToSkywalking(Model model, List<PromeModel> metric);
 	
-	public static void copySourceColumnsProperties(Model model, Metrics metrics, Map<String, String> labels) {
+	protected static class PersistenceColumnsException extends Exception {
+
+		private static final long serialVersionUID = -7168327933274940226L;
+		
+		public PersistenceColumnsException(String msg, Throwable cause) {
+			super(msg, cause);
+		}
+	}
+	
+	/**
+	 * 还需要将base64编码 TODO
+	 * @param model
+	 * @param metrics
+	 * @param labels
+	 */
+	public static void setSourceColumnsProperties(Model model, Metrics metrics, Map<String, String> labels) {
 		List<ScopeDefaultColumn> columns = DefaultScopeDefine.getDefaultColumns(DefaultScopeDefine.nameOf(model.getScopeId()));
 		columns.stream().forEach((sourceColumn)->{
 			try {
@@ -80,7 +93,13 @@ public abstract class PrometheusMeterMapper<SWModel extends Metrics, PromeModel 
 		});
 	}
 	
-	public static Map<String, String> extractMetricsColumnValues(Model model, Metrics metrics) {
+	/**
+	 * 需要base64解码 TODO
+	 * @param model
+	 * @param metrics
+	 * @return
+	 */
+	public static Map<String, String> extractSourceColumnProperties(Model model, Metrics metrics) {
 		
 		Map<String, String> labels = new HashMap<>();
 //		Map<String, Object> objectMap = storageBuilder.data2Map(metrics);
@@ -125,7 +144,7 @@ public abstract class PrometheusMeterMapper<SWModel extends Metrics, PromeModel 
 	}
 	
 	/**
-	 * 有些Metrics的id格式不太一样，比如EndpointTraffic
+	 * 有些Metrics的id格式不太一样，比如InstanceTraffic
 	 * @param model
 	 * @param ids
 	 * @return
