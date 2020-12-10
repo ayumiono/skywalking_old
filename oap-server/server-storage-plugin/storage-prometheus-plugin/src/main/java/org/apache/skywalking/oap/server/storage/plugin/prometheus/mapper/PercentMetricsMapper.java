@@ -18,10 +18,10 @@ import io.prometheus.client.Collector.Type;
 public class PercentMetricsMapper extends PrometheusMeterMapper<PercentMetrics, Gauge> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, PercentMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, PercentMetrics metrics, int age) {
 		try {
 			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
-			
+			labels.put("age", age+"");
 			List<Sample> samples = new ArrayList<>();
 			samples.add(
 				new Sample(

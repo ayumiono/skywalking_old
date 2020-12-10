@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.relation.endpoint.EndpointRelationServerSideMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
@@ -19,14 +20,15 @@ import io.prometheus.client.Collector.Type;
 public class EndpointRelationServerSideMetricsMapper extends PrometheusMeterMapper<EndpointRelationServerSideMetrics, Gauge> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, EndpointRelationServerSideMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, EndpointRelationServerSideMetrics metrics, int age) {
 		try {
 			Map<String, String> labels = new HashMap<>();
 			labels.put(EndpointRelationServerSideMetrics.SOURCE_ENDPOINT, metrics.getSourceEndpoint()+"");
 			labels.put(EndpointRelationServerSideMetrics.DEST_ENDPOINT, metrics.getDestEndpoint()+"");
 			labels.put(EndpointRelationServerSideMetrics.COMPONENT_ID, metrics.getComponentId()+"");
 			labels.put(EndpointRelationServerSideMetrics.ENTITY_ID, metrics.getEntityId()+"");
-			
+			labels.put("age", age+"");
+			labels.put("id", StringUtils.substringAfter(metrics.id(), org.apache.skywalking.oap.server.core.Const.ID_CONNECTOR)); //去掉timebucket信息
 			return new MetricFamilySamples(model.getName(), Type.COUNTER, "", 
 					Collections.singletonList(
 							new Sample(

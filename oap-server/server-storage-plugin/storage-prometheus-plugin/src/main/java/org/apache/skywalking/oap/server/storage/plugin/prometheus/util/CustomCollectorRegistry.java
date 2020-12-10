@@ -11,11 +11,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.apache.skywalking.oap.server.library.module.ModuleDefineHolder;
-import org.apache.skywalking.oap.server.telemetry.TelemetryModule;
-import org.apache.skywalking.oap.server.telemetry.api.GaugeMetrics;
-import org.apache.skywalking.oap.server.telemetry.api.MetricsCreator;
-import org.apache.skywalking.oap.server.telemetry.api.MetricsTag;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.StorageModulePrometheusProvider;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -24,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 不做name排重; 每次prometheus 从 httpserver 拉取完后，清空注册的 metrics collections; 
  * LRU //TODO
- * 
  * @author Administrator
  */
 @Slf4j
@@ -36,17 +31,7 @@ public class CustomCollectorRegistry extends CollectorRegistry {
 	private final Map<Collector, List<String>> collectorsToNames = new HashMap<Collector, List<String>>();
 	private final Map<String, List<Collector>> namesToCollectors = new HashMap<String, List<Collector>>();
 
-	private GaugeMetrics gaugeMetrics;
 	private final boolean autoDescribe;
-	
-	public void init(ModuleDefineHolder moduleDefineHolder) {
-		MetricsCreator metricsCreator = moduleDefineHolder.find(TelemetryModule.NAME)
-                .provider()
-                .getService(MetricsCreator.class);
-		gaugeMetrics = metricsCreator.createGauge("collectors_metrics", "the number of collectors current held by CustomCollectorRegistry", 
-				new MetricsTag.Keys("dimension"), new MetricsTag.Values("holding_collector_count"));
-		
-	}
 	
 	private CustomCollectorRegistry(boolean autoDescribe) {
 		this.autoDescribe = autoDescribe;
@@ -55,8 +40,7 @@ public class CustomCollectorRegistry extends CollectorRegistry {
 	private CustomCollectorRegistry() {
 		this(false);
 	}
-
-
+	
 	/**
 	 * Register a Collector.
 	 * <p>
@@ -72,7 +56,7 @@ public class CustomCollectorRegistry extends CollectorRegistry {
 				namesToCollectors.get(name).add(m);
 			}
 			collectorsToNames.put(m, names);
-			gaugeMetrics.inc();
+			StorageModulePrometheusProvider.collectorMonitor.inc();
 		}
 	}
 
@@ -85,7 +69,7 @@ public class CustomCollectorRegistry extends CollectorRegistry {
 			for (String name : names) {
 				namesToCollectors.remove(name);
 			}
-			gaugeMetrics.dec();
+			StorageModulePrometheusProvider.collectorMonitor.dec();
 		}
 	}
 
@@ -96,7 +80,7 @@ public class CustomCollectorRegistry extends CollectorRegistry {
 		synchronized (namesCollectorsLock) {
 			collectorsToNames.clear();
 			namesToCollectors.clear();
-			gaugeMetrics.setValue(0);
+			StorageModulePrometheusProvider.collectorMonitor.setValue(0);
 		}
 	}
 
@@ -187,7 +171,7 @@ public class CustomCollectorRegistry extends CollectorRegistry {
 							collectors.addAll(entry.getValue());
 							for(Collector pulledCollector : entry.getValue()) {
 								collectorsToNames.remove(pulledCollector);
-								gaugeMetrics.dec();
+								StorageModulePrometheusProvider.collectorMonitor.dec();
 							}
 						}
 					}

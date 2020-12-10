@@ -26,11 +26,12 @@ public class PercentileMetricsMapper extends PrometheusMeterMapper<PercentileMet
 	};
 	
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, PercentileMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, PercentileMetrics metrics, int age) {
 		try {
 			Type type = Type.SUMMARY;
 			String name = model.getName();
 			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
+			labels.put("age", age+"");
 			long timestamp = TimeBucket.getTimestamp(metrics.getTimeBucket(), model.getDownsampling());
 			
 			List<Sample> samples = new ArrayList<>();

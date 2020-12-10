@@ -29,6 +29,10 @@ import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.Prometh
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMetricsMapper;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.CustomCollectorRegistry;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
+import org.apache.skywalking.oap.server.telemetry.TelemetryModule;
+import org.apache.skywalking.oap.server.telemetry.api.GaugeMetrics;
+import org.apache.skywalking.oap.server.telemetry.api.MetricsCreator;
+import org.apache.skywalking.oap.server.telemetry.api.MetricsTag;
 
 import io.prometheus.client.exporter.HTTPServer;
 
@@ -36,11 +40,12 @@ public class StorageModulePrometheusProvider extends ModuleProvider {
 
 	private final StorageModulePrometheusConfig config;
 	
-	private CustomCollectorRegistry defaultRegistry;
+	public static GaugeMetrics cacheMonitor;
+	public static GaugeMetrics collectorMonitor;
 	
 	public StorageModulePrometheusProvider() {
 		super();
-		this.config = new StorageModulePrometheusConfig(); 
+		this.config = new StorageModulePrometheusConfig();
 	}
 	
 	@Override
@@ -75,8 +80,6 @@ public class StorageModulePrometheusProvider extends ModuleProvider {
 		
 		PrometheusHttpApi api = new PrometheusHttpApi(config.getPrometheusAddress());
 		
-		
-		
 		//只需要注册以下几个服务实现
 		//StorageDAO
 		this.registerServiceImplementation(StorageDAO.class, new StoragePrometheusDao(config, builder.build()));
@@ -88,13 +91,21 @@ public class StorageModulePrometheusProvider extends ModuleProvider {
 		this.registerServiceImplementation(ITopologyQueryDAO.class, new TopologyQueryPrometheusDAO(api));
 		//INetworkAddressAliasDAO
 		this.registerServiceImplementation(INetworkAddressAliasDAO.class, new NetworkAddressAliasPrometheusDAO(api));
+		
+		
 	}
 
 	@Override
 	public void start() throws ServiceNotProvidedException, ModuleStartException {
 		try {
-			CustomCollectorRegistry.defaultRegistry.init(getManager());
 			new HTTPServer(new InetSocketAddress(config.getPrometheusHTTPServerHost(), config.getPrometheusHTTPServerPort()), CustomCollectorRegistry.defaultRegistry);
+			MetricsCreator metricsCreator = getManager().find(TelemetryModule.NAME)
+		            .provider()
+		            .getService(MetricsCreator.class);
+			cacheMonitor = metricsCreator.createGauge("prometheus_storage_monitor", "prometheus storage plugin monitor", 
+					new MetricsTag.Keys("dimension"), new MetricsTag.Values("holding_metrics_count"));
+			collectorMonitor = metricsCreator.createGauge("prometheus_storage_monitor", "prometheus storage plugin monitor", 
+					new MetricsTag.Keys("dimension"), new MetricsTag.Values("holding_collector_count"));
 		} catch (Exception e) {
 			throw new ModuleStartException(e.getMessage(), e);
 		}

@@ -18,11 +18,12 @@ import io.prometheus.client.Collector.Type;
 public class HistogramMetricsMapper extends PrometheusMeterMapper<HistogramMetrics, PromeHistogram> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, HistogramMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, HistogramMetrics metrics, int age) {
 		try {
 			Type type = Type.HISTOGRAM;
 			String name = model.getName();
 			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
+			labels.put("age", age+"");
 			long timestamp = TimeBucket.getTimestamp(metrics.getTimeBucket(), model.getDownsampling());
 			
 			List<Sample> samples = new ArrayList<>();

@@ -18,11 +18,11 @@ import io.prometheus.client.Collector.Type;
 public class LongAvgMetricsMapper extends PrometheusMeterMapper<LongAvgMetrics, Gauge> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, LongAvgMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, LongAvgMetrics metrics, int age) {
 		
 		try {
 			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
-			
+			labels.put("age", age+"");
 			List<Sample> samples = new ArrayList<>();
 			samples.add(
 				new Sample(

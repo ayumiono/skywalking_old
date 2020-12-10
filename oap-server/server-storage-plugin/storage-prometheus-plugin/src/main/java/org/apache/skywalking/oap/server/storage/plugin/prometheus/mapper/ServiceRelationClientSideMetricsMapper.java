@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.relation.service.ServiceRelationClientSideMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
@@ -19,9 +20,12 @@ import io.prometheus.client.Collector.Type;
 public class ServiceRelationClientSideMetricsMapper extends PrometheusMeterMapper<ServiceRelationClientSideMetrics, Gauge> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, ServiceRelationClientSideMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, ServiceRelationClientSideMetrics metrics, int age) {
 		try {
 			Map<String, String> labels = new HashMap<>();
+			labels.put("age", age+"");
+			labels.put("id", StringUtils.substringAfter(metrics.id(), org.apache.skywalking.oap.server.core.Const.ID_CONNECTOR)); //去掉timebucket信息
+            
             labels.put(ServiceRelationClientSideMetrics.SOURCE_SERVICE_ID, metrics.getSourceServiceId());
             labels.put(ServiceRelationClientSideMetrics.DEST_SERVICE_ID, metrics.getDestServiceId());
             labels.put(ServiceRelationClientSideMetrics.COMPONENT_ID, metrics.getComponentId()+"");

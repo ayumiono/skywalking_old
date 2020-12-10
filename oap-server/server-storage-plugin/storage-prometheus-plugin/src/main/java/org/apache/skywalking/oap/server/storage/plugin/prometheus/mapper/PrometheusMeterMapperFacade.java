@@ -24,15 +24,15 @@ public class PrometheusMeterMapperFacade extends PrometheusMeterMapper<Metrics, 
 	}
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, Metrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, Metrics metrics, int age) {
 		if(delegates.containsKey(metrics.getClass())) {
-			MetricFamilySamples mfs = delegates.get(metrics.getClass()).skywalkingToPrometheus(model, metrics);
+			MetricFamilySamples mfs = delegates.get(metrics.getClass()).skywalkingToPrometheus(model, metrics, age);
 			if(mfs == null || mfs.samples == null || mfs.samples.size() == 0) {
 				throw new RuntimeException(model.getName() + " : " + metrics.getClass().getSimpleName() + " null MetricFamilySamples");
 			}
 			return mfs;
 		}else if(delegates.containsKey(metrics.getClass().getSuperclass())){
-			MetricFamilySamples mfs = delegates.get(metrics.getClass().getSuperclass()).skywalkingToPrometheus(model, metrics);
+			MetricFamilySamples mfs = delegates.get(metrics.getClass().getSuperclass()).skywalkingToPrometheus(model, metrics, age);
 			if(mfs == null || mfs.samples == null || mfs.samples.size() == 0) {
 				throw new RuntimeException(model.getName() + " : " + metrics.getClass().getSimpleName() + " null MetricFamilySamples");
 			}

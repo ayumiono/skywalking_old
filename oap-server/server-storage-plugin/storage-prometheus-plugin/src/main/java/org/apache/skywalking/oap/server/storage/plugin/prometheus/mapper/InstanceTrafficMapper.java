@@ -27,11 +27,12 @@ public class InstanceTrafficMapper extends PrometheusMeterMapper<InstanceTraffic
 	private static final Gson GSON = new Gson();
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, InstanceTraffic metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, InstanceTraffic metrics, int age) {
 		try {
 			Map<String, String> labels = new HashMap<>();
 			labels.put(InstanceTraffic.NAME, metrics.getName());
 			labels.put(InstanceTraffic.SERVICE_ID, metrics.getServiceId());
+			labels.put("age", age+"");
 			if (metrics.getProperties() != null) {
 				labels.put(InstanceTraffic.PROPERTIES, GSON.toJson(metrics.getProperties()));
             } else {

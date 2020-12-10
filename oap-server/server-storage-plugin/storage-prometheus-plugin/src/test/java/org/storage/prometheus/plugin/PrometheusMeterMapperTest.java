@@ -12,6 +12,7 @@ import org.apache.skywalking.oap.server.core.analysis.IDManager;
 import org.apache.skywalking.oap.server.core.analysis.NodeType;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.networkalias.NetworkAddressAlias;
+import org.apache.skywalking.oap.server.core.analysis.manual.relation.service.ServiceRelationServerSideMetrics;
 import org.apache.skywalking.oap.server.core.annotation.AnnotationListener;
 import org.apache.skywalking.oap.server.core.annotation.AnnotationScan;
 import org.apache.skywalking.oap.server.core.source.DefaultScopeDefine;
@@ -30,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import io.prometheus.client.Collector;
+import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 
 public class PrometheusMeterMapperTest {
@@ -49,31 +51,33 @@ public class PrometheusMeterMapperTest {
 		mapper = buildPrometheusMeterMapperFacade();
 		api = new PrometheusHttpApi("http://192.168.201.31:9090");
 		dao = new MetricsPrometheusDAO(api, mapper);
-		new HTTPServer(new InetSocketAddress(8119), CustomCollectorRegistry.defaultRegistry);
+		new HTTPServer(8119);
 	}
 	
 	@Test
-	public void networkAddress() throws IOException {
+	public void serviceRelationServerSideMetrics() throws IOException, InterruptedException {
+		long timestamp = System.currentTimeMillis();
+		System.out.println(timestamp);
+		Model model = new Model(ServiceRelationServerSideMetrics.INDEX_NAME, null, null, DefaultScopeDefine.SERVICE_RELATION, DownSampling.Minute, false, false, ServiceRelationServerSideMetrics.class);
+		ServiceRelationServerSideMetrics metrics = new ServiceRelationServerSideMetrics();
+		metrics.setEntityId("entity_id");
+		metrics.setComponentId(1);
+		metrics.setDestServiceId("dest_svc_id");
+		metrics.setSourceServiceId("source_svc_id");
+		metrics.setTimeBucket(TimeBucket.getTimeBucket(timestamp, DownSampling.Minute));
 		
-		Model model = new Model(NetworkAddressAlias.INDEX_NAME, null, null, DefaultScopeDefine.NETWORK_ADDRESS_ALIAS, DownSampling.Minute, false, false, NetworkAddressAlias.class);
-		NetworkAddressAlias metrics = new NetworkAddressAlias();
-		metrics.setAddress("localhost:20220");
-		metrics.setLastUpdateTimeBucket(TimeBucket.getTimeBucket(System.currentTimeMillis(), DownSampling.Minute));
-		metrics.setRepresentServiceId(IDManager.ServiceID.buildId("dubbo_mysteel_es_search_provider", NodeType.RPCFramework));
-		metrics.setRepresentServiceInstanceId(IDManager.ServiceInstanceID.buildId(metrics.getRepresentServiceId(), metrics.getAddress()));
-		metrics.setTimeBucket(metrics.getLastUpdateTimeBucket());
-		InsertRequest mfs = dao.prepareBatchInsert(model, metrics);
-		
-		PrometheusInsertRequest _mfs = (PrometheusInsertRequest) mfs;
-		
-		new Collector() {
-			@Override
-			public List<MetricFamilySamples> collect() {
-				return Collections.singletonList(_mfs.getMetricFamily());
-			}
-		}.register(CustomCollectorRegistry.defaultRegistry);
-		
-		LockSupport.park();
+		for(int i=0;i<10;i++) {
+			InsertRequest mfs = dao.prepareBatchInsert(model, metrics);
+			PrometheusInsertRequest _mfs = (PrometheusInsertRequest) mfs;
+			new Collector() {
+				@Override
+				public List<MetricFamilySamples> collect() {
+					return Collections.singletonList(_mfs.getMetricFamily());
+				}
+			}.register();
+			Thread.sleep(20000L);
+			CollectorRegistry.defaultRegistry.clear();
+		}
 	}
 	
 	private PrometheusMeterMapperFacade buildPrometheusMeterMapperFacade() throws ModuleStartException {

@@ -21,9 +21,10 @@ import io.prometheus.client.Collector.Type;
 public class ServiceTrafficMapper extends PrometheusMeterMapper<ServiceTraffic, Counter> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, ServiceTraffic metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, ServiceTraffic metrics, int age) {
 		try {
 			Map<String, String> labels = new HashMap<>();
+			labels.put("age", age+"");
             labels.put(ServiceTraffic.NAME, metrics.getName());
             labels.put(ServiceTraffic.NODE_TYPE, metrics.getNodeType().value()+"");
 			return new MetricFamilySamples(model.getName(), Type.COUNTER, "", 

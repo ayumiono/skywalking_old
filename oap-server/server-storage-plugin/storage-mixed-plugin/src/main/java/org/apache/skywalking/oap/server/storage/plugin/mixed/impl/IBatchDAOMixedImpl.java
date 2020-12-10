@@ -29,6 +29,7 @@ public class IBatchDAOMixedImpl implements IBatchDAO {
 
 	@Override
 	public void asynchronous(InsertRequest insertRequest) {
+		if(insertRequest == null) return;
 		Class<?> clazz = insertRequest.getClass();
 		if(clazz == PrometheusInsertRequest.class) {
 			candidates.get("prometheus").asynchronous(insertRequest);
@@ -46,7 +47,7 @@ public class IBatchDAOMixedImpl implements IBatchDAO {
 	@Override
 	public void synchronous(List<PrepareRequest> prepareRequests) {
 		//按类型分组
-		Map<String,List<PrepareRequest>> group = prepareRequests.stream().collect(Collectors.groupingBy((r)->{
+		Map<String,List<PrepareRequest>> group = prepareRequests.stream().filter(r->r!=null).collect(Collectors.groupingBy((r)->{
 			Class<?> clazz = r.getClass();
 			if(clazz == PrometheusInsertRequest.class) {
 				return "prometheus";

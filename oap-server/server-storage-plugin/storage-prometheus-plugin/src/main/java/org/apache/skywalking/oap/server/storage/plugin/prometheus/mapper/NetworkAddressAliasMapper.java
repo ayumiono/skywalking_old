@@ -19,9 +19,10 @@ import io.prometheus.client.Collector.Type;
 public class NetworkAddressAliasMapper extends PrometheusMeterMapper<NetworkAddressAlias, Gauge> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, NetworkAddressAlias metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, NetworkAddressAlias metrics, int age) {
 		try {
 			Map<String, String> labels = new HashMap<>();
+			labels.put("age", age+"");
             labels.put("address", metrics.getAddress());
             labels.put("represent_service_id", metrics.getRepresentServiceId());
             labels.put("represent_service_instance_id", metrics.getRepresentServiceInstanceId());

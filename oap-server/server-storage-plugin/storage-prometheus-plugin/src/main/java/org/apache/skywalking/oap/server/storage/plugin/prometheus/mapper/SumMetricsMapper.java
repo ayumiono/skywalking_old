@@ -19,9 +19,10 @@ import io.prometheus.client.Collector.Type;
 public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, Gauge>{
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, SumMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, SumMetrics metrics, int age) {
 		try {
 			Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
+			labels.put("age", age+"");
 			
 			return new MetricFamilySamples(model.getName(), Type.GAUGE, "", 
 					Collections.singletonList(

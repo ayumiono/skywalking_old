@@ -18,8 +18,9 @@ import io.prometheus.client.Collector.Type;
 public class ApdexMetricsMapper extends PrometheusMeterMapper<ApdexMetrics, Gauge> {
 
 	@Override
-	public MetricFamilySamples skywalkingToPrometheus(Model model, ApdexMetrics metrics) {
+	public MetricFamilySamples skywalkingToPrometheus(Model model, ApdexMetrics metrics, int age) {
 		Map<String, String> labels = PrometheusMeterMapper.extractSourceColumnProperties(model, metrics);
+		labels.put("age", age+"");
 		
 		List<Sample> samples = new ArrayList<>();
 		samples.add(

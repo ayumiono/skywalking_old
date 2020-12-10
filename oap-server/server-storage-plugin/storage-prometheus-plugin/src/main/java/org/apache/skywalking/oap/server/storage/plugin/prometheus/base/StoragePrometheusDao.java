@@ -14,6 +14,7 @@ import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.StorageModulePrometheusConfig;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapper;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
+import org.apache.skywalking.oap.server.telemetry.api.GaugeMetrics;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +24,7 @@ public class StoragePrometheusDao implements StorageDAO {
 	protected final StorageModulePrometheusConfig config;
 	
 	protected final PrometheusMeterMapper<Metrics, Metric> mapper;
-
+	
 	@Override
 	public IMetricsDAO newMetricsDao(StorageBuilder<Metrics> storageBuilder) {
 		return new MetricsPrometheusDAO(new PrometheusHttpApi(config.getPrometheusAddress()), mapper);

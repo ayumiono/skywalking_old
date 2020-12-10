@@ -37,7 +37,7 @@ public abstract class PrometheusMeterMapper<SWModel extends Metrics, PromeModel 
 	
 	final static DecimalFormat df = new DecimalFormat("#.000");
 	
-	public abstract MetricFamilySamples skywalkingToPrometheus(Model model, SWModel metrics);
+	public abstract MetricFamilySamples skywalkingToPrometheus(Model model, SWModel metrics, int age);
 	
 	public abstract SWModel prometheusToSkywalking(Model model, List<PromeModel> metric);
 	

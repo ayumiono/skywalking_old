@@ -35,7 +35,7 @@ public class BatchProcessPrometheusDAO implements IBatchDAO {
 			new Collector() {
 				@Override
 				public List<MetricFamilySamples> collect() {
-					return prepareRequests.stream().map(prepareRequst->((PrometheusInsertRequest) prepareRequst).getMetricFamily()).collect(Collectors.toList());
+					return prepareRequests.stream().filter(prepareRequst->prepareRequst != null).map(prepareRequst->((PrometheusInsertRequest) prepareRequst).getMetricFamily()).collect(Collectors.toList());
 				}
 			}.register(CustomCollectorRegistry.defaultRegistry);
 		} catch (Exception e) {
