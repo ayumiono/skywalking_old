@@ -12,7 +12,7 @@ import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.endpoint.EndpointTraffic;
 import org.apache.skywalking.oap.server.core.analysis.manual.instance.InstanceTraffic;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -22,7 +22,7 @@ import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(InstanceTraffic.class)
-public class InstanceTrafficMapper extends PrometheusMeterMapper<InstanceTraffic, Gauge> {
+public class InstanceTrafficMapper extends PrometheusMeterMapper<InstanceTraffic, PromeGauge> {
 	
 	private static final Gson GSON = new Gson();
 
@@ -55,9 +55,9 @@ public class InstanceTrafficMapper extends PrometheusMeterMapper<InstanceTraffic
 	}
 
 	@Override
-	public InstanceTraffic prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public InstanceTraffic prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
-			Gauge metric = metricList.get(0);
+			PromeGauge metric = metricList.get(0);
 			InstanceTraffic metrics = (InstanceTraffic) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 			metrics.setServiceId(metric.getLabels().get(EndpointTraffic.SERVICE_ID));

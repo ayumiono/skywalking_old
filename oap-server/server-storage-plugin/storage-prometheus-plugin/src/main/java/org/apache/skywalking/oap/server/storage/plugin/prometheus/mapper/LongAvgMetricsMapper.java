@@ -8,14 +8,14 @@ import java.util.Map;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.metrics.LongAvgMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(LongAvgMetrics.class)
-public class LongAvgMetricsMapper extends PrometheusMeterMapper<LongAvgMetrics, Gauge> {
+public class LongAvgMetricsMapper extends PrometheusMeterMapper<LongAvgMetrics, PromeGauge> {
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, LongAvgMetrics metrics, int age) {
@@ -63,7 +63,7 @@ public class LongAvgMetricsMapper extends PrometheusMeterMapper<LongAvgMetrics, 
 	}
 	
 	@Override
-	public LongAvgMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public LongAvgMetrics prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
 			LongAvgMetrics metrics = (LongAvgMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metricList.get(0).getLabels());
@@ -81,11 +81,11 @@ public class LongAvgMetricsMapper extends PrometheusMeterMapper<LongAvgMetrics, 
 		}
 	}
 
-	public void setPersistenceColumns(Model model, List<Gauge> metricList, LongAvgMetrics metrics) {
+	public void setPersistenceColumns(Model model, List<PromeGauge> metricList, LongAvgMetrics metrics) {
 		if(metricList.size() != 3) {
 			throw new IllegalArgumentException("expect 3 metrics but found " + metricList.size());
 		}
-		for(Gauge metric : metricList) {
+		for(PromeGauge metric : metricList) {
 			if(!metric.getLabels().containsKey("annotation")) {
 				metrics.setValue(new BigDecimal(metric.getValue()).longValue());
 				metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));

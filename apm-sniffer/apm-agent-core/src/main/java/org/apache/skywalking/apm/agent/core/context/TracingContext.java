@@ -359,6 +359,7 @@ public class TracingContext implements AbstractTracerContext {
      */
     @Override
     public boolean stopSpan(AbstractSpan span) {
+    	logger.debug("TraceContext stopSpan invoked");
         AbstractSpan lastSpan = peek();
         if (lastSpan == span) {
             if (lastSpan instanceof AbstractTracingSpan) {
@@ -370,11 +371,23 @@ public class TracingContext implements AbstractTracerContext {
                 pop();
             }
         } else {
+        	logger.error("Stopping the unexpected span");
             throw new IllegalStateException("Stopping the unexpected span = " + span);
         }
 
+        if(!activeSpanStack.isEmpty()) {
+        	logger.debug("TracingContext stopSpan: active span stack left" + activeSpanStack.size());
+        	for(AbstractSpan spanLeft : activeSpanStack) {
+        		if(spanLeft instanceof AbstractTracingSpan) {
+        			AbstractTracingSpan _spanLeft = (AbstractTracingSpan) spanLeft;
+        			logger.debug("operationName:" + _spanLeft.getOperationName() + " transform:" + _spanLeft.transform().toString());
+        		}
+        	}
+        }else {
+        	logger.debug("activeSpanStack now is empty");
+        }
         finish();
-
+        
         return activeSpanStack.isEmpty();
     }
 
@@ -386,6 +399,7 @@ public class TracingContext implements AbstractTracerContext {
                     asyncFinishLock = new ReentrantLock();
                     ASYNC_SPAN_COUNTER_UPDATER.set(this, 0);
                     isRunningInAsyncMode = true;
+                    logger.debug("awaitFinishAsync invoked, isRunningInAsyncMode set to true!!!");
                 }
             }
         }
@@ -429,6 +443,8 @@ public class TracingContext implements AbstractTracerContext {
         }
         try {
             boolean isFinishedInMainThread = activeSpanStack.isEmpty() && running;
+            logger.debug("isFinishedInMainThread: "+isFinishedInMainThread);
+            logger.debug("(!isRunningInAsyncMode || asyncSpanCounter == 0) : " + (!isRunningInAsyncMode || asyncSpanCounter == 0));
             if (isFinishedInMainThread) {
                 /*
                  * Notify after tracing finished in the main thread.
@@ -451,6 +467,7 @@ public class TracingContext implements AbstractTracerContext {
                 }
 
                 TracingContext.ListenerManager.notifyFinish(finishedSegment);
+                logger.debug("TracingContext.ListenerManager.notifyFinish");
 
                 running = false;
             }

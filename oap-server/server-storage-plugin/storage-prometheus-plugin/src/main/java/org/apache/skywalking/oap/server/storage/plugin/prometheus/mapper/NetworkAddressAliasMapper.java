@@ -9,14 +9,14 @@ import java.util.Map;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.networkalias.NetworkAddressAlias;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(NetworkAddressAlias.class)
-public class NetworkAddressAliasMapper extends PrometheusMeterMapper<NetworkAddressAlias, Gauge> {
+public class NetworkAddressAliasMapper extends PrometheusMeterMapper<NetworkAddressAlias, PromeGauge> {
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, NetworkAddressAlias metrics, int age) {
@@ -41,9 +41,9 @@ public class NetworkAddressAliasMapper extends PrometheusMeterMapper<NetworkAddr
 	}
 
 	@Override
-	public NetworkAddressAlias prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public NetworkAddressAlias prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
-			Gauge metric = metricList.get(0);
+			PromeGauge metric = metricList.get(0);
 			NetworkAddressAlias metrics = (NetworkAddressAlias) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			Map<String, String> labels = metric.getLabels();
 			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));

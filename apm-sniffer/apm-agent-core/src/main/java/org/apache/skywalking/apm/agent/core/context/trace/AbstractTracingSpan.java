@@ -281,7 +281,6 @@ public abstract class AbstractTracingSpan implements AbstractSpan {
                 spanBuilder.addRefs(ref.transform());
             }
         }
-
         return spanBuilder;
     }
 

@@ -18,18 +18,21 @@
 
 package org.apache.skywalking.apm.plugin.asf.dubbo;
 
+import java.lang.reflect.Method;
+
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Result;
 import org.apache.dubbo.rpc.RpcContext;
-import java.lang.reflect.Method;
-import org.apache.skywalking.apm.agent.core.context.ContextCarrier;
-import org.apache.skywalking.apm.agent.core.context.tag.Tags;
 import org.apache.skywalking.apm.agent.core.context.CarrierItem;
+import org.apache.skywalking.apm.agent.core.context.ContextCarrier;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
+import org.apache.skywalking.apm.agent.core.context.tag.Tags;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
 import org.apache.skywalking.apm.agent.core.context.trace.SpanLayer;
+import org.apache.skywalking.apm.agent.core.logging.api.ILog;
+import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
@@ -48,9 +51,15 @@ public class DubboInterceptor implements InstanceMethodsAroundInterceptor {
      * <h2>Provider:</h2> The serialized trace context data will extract from
      * {@link RpcContext#attachments}. current trace segment will ref if the serialize context data is not null.
      */
+	
+	private static ILog logger = LogManager.getLogger(DubboInterceptor.class);
+	
     @Override
     public void beforeMethod(EnhancedInstance objInst, Method method, Object[] allArguments, Class<?>[] argumentsTypes,
-        MethodInterceptResult result) throws Throwable {
+    	MethodInterceptResult result) throws Throwable {
+    	
+    	logger.debug("DubboInterceptor log debug test");
+    	
         Invoker invoker = (Invoker) allArguments[0];
         Invocation invocation = (Invocation) allArguments[1];
         RpcContext rpcContext = RpcContext.getContext();

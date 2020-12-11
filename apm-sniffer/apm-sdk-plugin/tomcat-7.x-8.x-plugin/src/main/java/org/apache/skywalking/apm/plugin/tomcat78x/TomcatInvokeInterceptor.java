@@ -22,8 +22,10 @@ import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.catalina.connector.Request;
 import org.apache.skywalking.apm.agent.core.context.CarrierItem;
 import org.apache.skywalking.apm.agent.core.context.ContextCarrier;
@@ -32,6 +34,8 @@ import org.apache.skywalking.apm.agent.core.context.tag.Tags;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
 import org.apache.skywalking.apm.agent.core.context.trace.SpanLayer;
 import org.apache.skywalking.apm.agent.core.context.trace.TraceSegment;
+import org.apache.skywalking.apm.agent.core.logging.api.ILog;
+import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
@@ -51,6 +55,7 @@ public class TomcatInvokeInterceptor implements InstanceMethodsAroundInterceptor
     private static boolean IS_SERVLET_GET_STATUS_METHOD_EXIST;
     private static final String SERVLET_RESPONSE_CLASS = "javax.servlet.http.HttpServletResponse";
     private static final String GET_STATUS_METHOD = "getStatus";
+    private static ILog logger = LogManager.getLogger(TomcatInvokeInterceptor.class);
 
     static {
         IS_SERVLET_GET_STATUS_METHOD_EXIST = MethodUtil.isMethodExist(
@@ -67,6 +72,7 @@ public class TomcatInvokeInterceptor implements InstanceMethodsAroundInterceptor
     public void beforeMethod(EnhancedInstance objInst, Method method, Object[] allArguments, Class<?>[] argumentsTypes,
                              MethodInterceptResult result) throws Throwable {
         Request request = (Request) allArguments[0];
+        logger.debug("TomcatInvokeInterceptor request uri" + request.getRequestURI());
         ContextCarrier contextCarrier = new ContextCarrier();
 
         CarrierItem next = contextCarrier.items();
@@ -103,6 +109,7 @@ public class TomcatInvokeInterceptor implements InstanceMethodsAroundInterceptor
         }
         ContextManager.stopSpan();
         ContextManager.getRuntimeContext().remove(Constants.FORWARD_REQUEST_FLAG);
+        logger.debug("TomcatInvokeInterceptor afterMethod");
         return ret;
     }
 

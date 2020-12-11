@@ -7,19 +7,19 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetric;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import lombok.Getter;
 import lombok.Singular;
 
 @Getter
-public class PrometheusMeterMapperFacade extends PrometheusMeterMapper<Metrics, Metric>{
+public class PrometheusMeterMapperFacade extends PrometheusMeterMapper<Metrics, PromeMetric>{
 	
-	Map<Class<?>, PrometheusMeterMapper<Metrics, Metric>> delegates = new HashMap<>();
+	Map<Class<?>, PrometheusMeterMapper<Metrics, PromeMetric>> delegates = new HashMap<>();
 	
 	@lombok.Builder
-    public PrometheusMeterMapperFacade(@Singular("delegate") Map<Class<?>, PrometheusMeterMapper<Metrics, Metric>> delegates) {
+    public PrometheusMeterMapperFacade(@Singular("delegate") Map<Class<?>, PrometheusMeterMapper<Metrics, PromeMetric>> delegates) {
 		this.delegates = delegates;
 	}
 
@@ -43,7 +43,7 @@ public class PrometheusMeterMapperFacade extends PrometheusMeterMapper<Metrics, 
 	}
 
 	@Override
-	public Metrics prometheusToSkywalking(Model model, List<Metric> metricList) {
+	public Metrics prometheusToSkywalking(Model model, List<PromeMetric> metricList) {
 		if(delegates.containsKey(model.getStorageModelClazz())) {
 			Metrics metrics = delegates.get(model.getStorageModelClazz()).prometheusToSkywalking(model, metricList);
 			if(metrics == null) {

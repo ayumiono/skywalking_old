@@ -15,7 +15,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Getter
-public class PromeHistogram extends Metric {
+public class PromeHistogram extends PromeMetric {
 
     private long sampleCount;
     private double sampleSum;
@@ -23,15 +23,15 @@ public class PromeHistogram extends Metric {
 
     @lombok.Builder
     public PromeHistogram(String name, @Singular Map<String, String> labels, long sampleCount, double sampleSum,
-        @Singular Map<String, Long> buckets, long timestamp) {
-        super(name, labels, timestamp);
+        @Singular Map<String, Long> buckets, long timestamp, int age, String id) {
+        super(name, labels, timestamp, age, id);
         getLabels().remove("le");
         this.sampleCount = sampleCount;
         this.sampleSum = sampleSum;
         this.buckets = buckets;
     }
 
-    @Override public Metric sum(Metric m) {
+    @Override public PromeMetric sum(PromeMetric m) {
     	PromeHistogram h = (PromeHistogram) m;
         this.buckets = Stream.concat(getBuckets().entrySet().stream(), h.getBuckets().entrySet().stream())
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, Long::sum, TreeMap::new));

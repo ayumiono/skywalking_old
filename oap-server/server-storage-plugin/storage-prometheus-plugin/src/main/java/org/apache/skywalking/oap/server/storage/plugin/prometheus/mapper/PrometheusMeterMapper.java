@@ -15,7 +15,7 @@ import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.source.DefaultScopeDefine;
 import org.apache.skywalking.oap.server.core.source.ScopeDefaultColumn;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 //@RequiredArgsConstructor
 @Slf4j
-public abstract class PrometheusMeterMapper<SWModel extends Metrics, PromeModel extends Metric> {
+public abstract class PrometheusMeterMapper<SWModel extends Metrics, PromeModel extends PromeMetric> {
 	
 	final Logger logger = LoggerFactory.getLogger(this.getClass());
 	

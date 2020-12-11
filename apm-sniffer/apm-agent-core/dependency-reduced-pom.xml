@@ -23,6 +23,9 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -116,6 +119,19 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -311,23 +327,23 @@
     </dependencies>
   </dependencyManagement>
   <properties>
-    <bytebuddy.version>1.10.7</bytebuddy.version>
-    <shade.io.grpc.source>io.grpc</shade.io.grpc.source>
-    <wiremock.version>2.6.0</wiremock.version>
-    <shade.com.google.source>com.google</shade.com.google.source>
-    <shade.io.perfmark.source>io.perfmark</shade.io.perfmark.source>
-    <shade.io.grpc.target>${shade.package}.${shade.io.grpc.source}</shade.io.grpc.target>
-    <guava.version>20.0</guava.version>
-    <shade.io.netty.source>io.netty</shade.io.netty.source>
-    <shade.com.google.target>${shade.package}.${shade.com.google.source}</shade.com.google.target>
-    <os-maven-plugin.version>1.4.1.Final</os-maven-plugin.version>
-    <netty-tcnative-boringssl-static.version>2.0.7.Final</netty-tcnative-boringssl-static.version>
     <shade.io.perfmark.target>${shade.package}.${shade.io.perfmark.source}</shade.io.perfmark.target>
-    <shade.io.netty.target>${shade.package}.${shade.io.netty.source}</shade.io.netty.target>
     <shade.io.opencensus.source>io.opencensus</shade.io.opencensus.source>
+    <shade.io.grpc.target>${shade.package}.${shade.io.grpc.source}</shade.io.grpc.target>
+    <netty-tcnative-boringssl-static.version>2.0.7.Final</netty-tcnative-boringssl-static.version>
+    <os-maven-plugin.version>1.4.1.Final</os-maven-plugin.version>
+    <shade.io.netty.source>io.netty</shade.io.netty.source>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <shade.io.opencensus.target>${shade.package}.${shade.io.opencensus.source}</shade.io.opencensus.target>
+    <wiremock.version>2.6.0</wiremock.version>
     <ststem-rules.version>1.18.0</ststem-rules.version>
+    <shade.io.opencensus.target>${shade.package}.${shade.io.opencensus.source}</shade.io.opencensus.target>
+    <shade.io.netty.target>${shade.package}.${shade.io.netty.source}</shade.io.netty.target>
     <shade.package>org.apache.skywalking.apm.dependencies</shade.package>
+    <shade.com.google.source>com.google</shade.com.google.source>
+    <guava.version>20.0</guava.version>
+    <shade.io.perfmark.source>io.perfmark</shade.io.perfmark.source>
+    <shade.io.grpc.source>io.grpc</shade.io.grpc.source>
+    <bytebuddy.version>1.10.7</bytebuddy.version>
+    <shade.com.google.target>${shade.package}.${shade.com.google.source}</shade.com.google.target>
   </properties>
 </project>

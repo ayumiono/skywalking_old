@@ -10,14 +10,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.relation.endpoint.EndpointRelationServerSideMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(EndpointRelationServerSideMetrics.class)
-public class EndpointRelationServerSideMetricsMapper extends PrometheusMeterMapper<EndpointRelationServerSideMetrics, Gauge> {
+public class EndpointRelationServerSideMetricsMapper extends PrometheusMeterMapper<EndpointRelationServerSideMetrics, PromeGauge> {
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, EndpointRelationServerSideMetrics metrics, int age) {
@@ -44,9 +44,9 @@ public class EndpointRelationServerSideMetricsMapper extends PrometheusMeterMapp
 	}
 
 	@Override
-	public EndpointRelationServerSideMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public EndpointRelationServerSideMetrics prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
-			Gauge metric = metricList.get(0);
+			PromeGauge metric = metricList.get(0);
 			EndpointRelationServerSideMetrics metrics = (EndpointRelationServerSideMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 			metrics.setComponentId(Integer.parseInt(metric.getLabels().get(EndpointRelationServerSideMetrics.COMPONENT_ID)));

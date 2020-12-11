@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
 import org.apache.skywalking.oap.server.library.util.prometheus.metrics.MetricType;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeSummary.PromeSummaryBuilder;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi.PrometheusHttpAPIRespBody;
@@ -31,7 +30,7 @@ public class JSONParser {
 
 	private final PrometheusHttpAPIRespBody json;
 
-	public MetricFamily metricFamily;
+	public PromeMetricFamily metricFamily;
 
 	public MetricType type = MetricType.GAUGE;
 	public List<PromeTextSample> samples = new ArrayList<>();
@@ -40,7 +39,7 @@ public class JSONParser {
 	private boolean _count_flag = false;
 	private boolean _quantile_flag = false;
 
-	public MetricFamily parse() throws IOException {
+	public PromeMetricFamily parse() throws IOException {
 		json.getData().getResult().forEach(metric->{
 			String name = metric.getMetric().get("__name__").toString();
 			Map<String, String> labels = metric.getMetric();
@@ -77,7 +76,7 @@ public class JSONParser {
 			return;
 		}
 
-		MetricFamily.Builder metricFamilyBuilder = new MetricFamily.Builder();
+		PromeMetricFamily.Builder metricFamilyBuilder = new PromeMetricFamily.Builder();
 		metricFamilyBuilder.setName("");
 		metricFamilyBuilder.setType(type);
 
@@ -91,47 +90,39 @@ public class JSONParser {
 				labels.remove("annotation");
 				return Pair.of(labels, sample);
 			}).collect(groupingBy(Pair::getLeft, mapping(Pair::getRight, toList()))).forEach((labels, samples)->{
-				samples.forEach(textSample -> metricFamilyBuilder
-						.addMetric(Gauge.builder().name(textSample.getName()).value(convertStringToDouble(textSample.getValue()))
-						.labels(textSample.getLabels()).timestamp(textSample.timestamp).build()));
+				samples.forEach((textSample) -> {
+					int age = textSample.getLabels().get("age") == null ? 0 : Integer.parseInt(textSample.getLabels().get("age"));
+					metricFamilyBuilder
+					.addMetric(PromeGauge.builder().name(textSample.getName()).value(convertStringToDouble(textSample.getValue()))
+					.labels(textSample.getLabels()).timestamp(textSample.timestamp).age(age).build());
+				});
 			});
 			break;
 		case HISTOGRAM:
-//			samples.stream().map(sample -> {
-//				Map<String, String> labels = Maps.newHashMap(sample.getLabels());
-//				labels.remove("le");
-//				return Pair.of(labels, sample);
-//			}).collect(groupingBy(Pair::getLeft, mapping(Pair::getRight, toList()))).forEach((labels, samples) -> {
-//				PromeHistogram.PromeHistogramBuilder hBuilder = PromeHistogram.builder();
-//				hBuilder.name("").timestamp(samples.get(0).timestamp).labels(labels);
-//				samples.forEach(textSample -> {
-//					if (textSample.getName().endsWith("_count")) {
-//						hBuilder.sampleCount((long) convertStringToDouble(textSample.getValue()));
-//					} else if (textSample.getName().endsWith("_sum")) {
-//						hBuilder.sampleSum(convertStringToDouble(textSample.getValue()));
-//					} else if (textSample.getLabels().containsKey("le")) {
-//						hBuilder.bucket(textSample.getLabels().remove("le"),
-//								(long) convertStringToDouble(textSample.getValue()));
-//					}
-//				});
-//				metricFamilyBuilder.addMetric(hBuilder.build());
-//			});
-			long timestamp = samples.get(0).timestamp;
-			PromeHistogram.PromeHistogramBuilder hBuilder = PromeHistogram.builder();
-            hBuilder.name("").timestamp(timestamp);
-            samples.forEach(textSample -> {
-                hBuilder.labels(textSample.getLabels());
-                if (textSample.getName().endsWith("_count")) {
-                    hBuilder.sampleCount((long) convertStringToDouble(textSample.getValue()));
-                } else if (textSample.getName().endsWith("_sum")) {
-                    hBuilder.sampleSum(convertStringToDouble(textSample.getValue()));
-                } else if (textSample.getLabels().containsKey("le")) {
-                    hBuilder.bucket(textSample.getLabels().remove("le"),
-                        (long) convertStringToDouble(textSample.getValue())
-                    );
-                }
-            });
-            metricFamilyBuilder.addMetric(hBuilder.build());
+			samples.stream().map(sample -> {
+				Map<String, String> labels = Maps.newHashMap(sample.getLabels());
+				labels.remove("le");
+				labels.remove("__name__");//_bucket的name不一样
+				return Pair.of(labels, sample);
+			}).collect(groupingBy(Pair::getLeft, mapping(Pair::getRight, toList()))).forEach((labels, samples) -> {
+				long timestamp = samples.get(0).timestamp;
+				PromeHistogram.PromeHistogramBuilder hBuilder = PromeHistogram.builder();
+	            hBuilder.name("").timestamp(timestamp);
+	            int age = samples.get(0).getLabels().get("age") == null ? 0 : Integer.parseInt(samples.get(0).getLabels().get("age"));
+	            samples.forEach(textSample -> {
+	                hBuilder.labels(textSample.getLabels());
+	                if (textSample.getName().endsWith("_count")) {
+	                    hBuilder.sampleCount((long) convertStringToDouble(textSample.getValue()));
+	                } else if (textSample.getName().endsWith("_sum")) {
+	                    hBuilder.sampleSum(convertStringToDouble(textSample.getValue()));
+	                } else if (textSample.getLabels().containsKey("le")) {
+	                    hBuilder.bucket(textSample.getLabels().remove("le"),
+	                        (long) convertStringToDouble(textSample.getValue())
+	                    );
+	                }
+	            });
+	            metricFamilyBuilder.addMetric(hBuilder.age(age).build());
+			});
 			break;
 		case SUMMARY:
 			samples.stream().map(sample -> {
@@ -143,6 +134,7 @@ public class JSONParser {
 			}).collect(groupingBy(Pair::getLeft, mapping(Pair::getRight, toList()))).forEach((labels, samples) -> {
 				PromeSummaryBuilder sBuilder = PromeSummary.builder();
 				String precision = labels.remove("precision");
+				int _age = samples.get(0).getLabels().get("age") == null ? 0 : Integer.parseInt(samples.get(0).getLabels().get("age")); 
 				sBuilder.name("").timestamp(samples.get(0).timestamp).labels(labels).precision(Integer.parseInt(precision));
 				samples.forEach(textSample -> {
 					if (textSample.getName().endsWith("_count")) {
@@ -157,7 +149,7 @@ public class JSONParser {
 								convertStringToLong(textSample.getValue()));
 					}
 				});
-				metricFamilyBuilder.addMetric(sBuilder.build());
+				metricFamilyBuilder.addMetric(sBuilder.age(_age).build());
 			});
 			break;
 		default:

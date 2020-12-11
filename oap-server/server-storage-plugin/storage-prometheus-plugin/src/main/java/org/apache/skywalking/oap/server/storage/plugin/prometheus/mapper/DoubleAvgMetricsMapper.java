@@ -9,13 +9,14 @@ import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.metrics.DoubleAvgMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
 import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(DoubleAvgMetrics.class)
-public class DoubleAvgMetricsMapper extends PrometheusMeterMapper<DoubleAvgMetrics, Gauge> {
+public class DoubleAvgMetricsMapper extends PrometheusMeterMapper<DoubleAvgMetrics, PromeGauge> {
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, DoubleAvgMetrics metrics, int age) {
@@ -64,7 +65,7 @@ public class DoubleAvgMetricsMapper extends PrometheusMeterMapper<DoubleAvgMetri
 	}
 	
 	@Override
-	public DoubleAvgMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public DoubleAvgMetrics prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
 			DoubleAvgMetrics metrics = (DoubleAvgMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metricList.get(0).getLabels());
@@ -82,11 +83,11 @@ public class DoubleAvgMetricsMapper extends PrometheusMeterMapper<DoubleAvgMetri
 		}
 	}
 
-	public void setPersistenceColumns(Model model, List<Gauge> metricList, DoubleAvgMetrics metrics) {
+	public void setPersistenceColumns(Model model, List<PromeGauge> metricList, DoubleAvgMetrics metrics) {
 		if(metricList.size() != 3) {
 			throw new IllegalArgumentException("expect 3 metrics but found " + metricList.size());
 		}
-		for(Gauge metric : metricList) {
+		for(PromeGauge metric : metricList) {
 			if(!metric.getLabels().containsKey("annotation")) {
 				metrics.setValue(metric.getValue());
 				metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));

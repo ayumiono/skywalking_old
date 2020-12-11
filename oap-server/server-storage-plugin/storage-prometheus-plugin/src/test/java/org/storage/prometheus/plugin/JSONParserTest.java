@@ -33,7 +33,8 @@ import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.Prometh
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapperFacade;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMetricsMapper;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.JSONParser;
-import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.MetricFamily;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetric;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetricFamily;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi.PrometheusHttpAPIRespBody;
 import org.junit.Test;
 
@@ -128,16 +129,16 @@ public class JSONParserTest {
 		PrometheusHttpAPIRespBody body = readJsonFile("summary.json");
 //		PrometheusHttpAPIRespBody body = readJsonFile("doubleAvg.json");
 		JSONParser jsonParser = new JSONParser(body);
-		MetricFamily mf = jsonParser.parse();
+		PromeMetricFamily mf = jsonParser.parse();
 		
-		Map<String, List<Metric>> idGroup = mf.getMetrics().stream().collect(Collectors.groupingBy(metrics->{
+		Map<String, List<PromeMetric>> idGroup = mf.getMetrics().stream().collect(Collectors.groupingBy(metrics->{
 			String id = metrics.getLabels().get("id");//FIXME 会不会有漏洞
 			return id;
 		}));
 		PrometheusMeterMapperFacade mapper = buildPrometheusMeterMapperFacade();
 		Model model = new Model(NetworkAddressAlias.INDEX_NAME, null, null, DefaultScopeDefine.NETWORK_ADDRESS_ALIAS, DownSampling.Minute, false, false, PercentileMetricsMock.class);
 		List<Metrics> result = new ArrayList<Metrics>();
-		for(Entry<String, List<Metric>> entry : idGroup.entrySet()) {
+		for(Entry<String, List<PromeMetric>> entry : idGroup.entrySet()) {
 			PercentileMetricsMock metrics = (PercentileMetricsMock) mapper.prometheusToSkywalking(model, entry.getValue());
 			result.add(metrics);
 		}

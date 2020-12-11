@@ -98,6 +98,19 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
@@ -182,9 +195,9 @@
   </dependencies>
   <properties>
     <shade.net.bytebuddy.target>${shade.package}.${shade.net.bytebuddy.source}</shade.net.bytebuddy.target>
+    <can.redefine.classes>true</can.redefine.classes>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <shade.net.bytebuddy.source>net.bytebuddy</shade.net.bytebuddy.source>
-    <can.redefine.classes>true</can.redefine.classes>
     <can.retransform.classes>true</can.retransform.classes>
     <premain.class>org.apache.skywalking.apm.agent.SkyWalkingAgent</premain.class>
   </properties>

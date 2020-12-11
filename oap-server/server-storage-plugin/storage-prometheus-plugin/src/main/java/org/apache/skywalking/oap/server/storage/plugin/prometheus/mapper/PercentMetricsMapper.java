@@ -8,14 +8,14 @@ import java.util.Map;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.metrics.PercentMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(PercentMetrics.class)
-public class PercentMetricsMapper extends PrometheusMeterMapper<PercentMetrics, Gauge> {
+public class PercentMetricsMapper extends PrometheusMeterMapper<PercentMetrics, PromeGauge> {
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, PercentMetrics metrics, int age) {
@@ -62,7 +62,7 @@ public class PercentMetricsMapper extends PrometheusMeterMapper<PercentMetrics, 
 	}
 	
 	@Override
-	public PercentMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public PercentMetrics prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
 			PercentMetrics metrics = (PercentMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metricList.get(0).getLabels());
@@ -80,11 +80,11 @@ public class PercentMetricsMapper extends PrometheusMeterMapper<PercentMetrics, 
 		}
 	}
 
-	public void setPersistenceColumns(Model model, List<Gauge> metricList, PercentMetrics metrics) {
+	public void setPersistenceColumns(Model model, List<PromeGauge> metricList, PercentMetrics metrics) {
 		if(metricList.size() != 3) {
 			throw new IllegalArgumentException("expect 3 metrics but found " + metricList.size());
 		}
-		for(Gauge metric : metricList) {
+		for(PromeGauge metric : metricList) {
 			if(!metric.getLabels().containsKey("annotation")) {
 				metrics.setPercentage(new BigDecimal(metric.getValue()).intValue());
 				metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));

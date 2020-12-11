@@ -2,17 +2,13 @@ package org.storage.prometheus.plugin;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.locks.LockSupport;
 
 import org.apache.skywalking.oap.server.core.analysis.DownSampling;
-import org.apache.skywalking.oap.server.core.analysis.IDManager;
-import org.apache.skywalking.oap.server.core.analysis.NodeType;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
-import org.apache.skywalking.oap.server.core.analysis.manual.networkalias.NetworkAddressAlias;
 import org.apache.skywalking.oap.server.core.analysis.manual.relation.service.ServiceRelationServerSideMetrics;
+import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.annotation.AnnotationListener;
 import org.apache.skywalking.oap.server.core.annotation.AnnotationScan;
 import org.apache.skywalking.oap.server.core.source.DefaultScopeDefine;
@@ -25,7 +21,6 @@ import org.apache.skywalking.oap.server.storage.plugin.prometheus.base.Prometheu
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapper;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapperFacade;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMetricsMapper;
-import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.CustomCollectorRegistry;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +52,7 @@ public class PrometheusMeterMapperTest {
 	@Test
 	public void serviceRelationServerSideMetrics() throws IOException, InterruptedException {
 		long timestamp = System.currentTimeMillis();
-		System.out.println(timestamp);
+		System.out.println("timestamp:" + timestamp);
 		Model model = new Model(ServiceRelationServerSideMetrics.INDEX_NAME, null, null, DefaultScopeDefine.SERVICE_RELATION, DownSampling.Minute, false, false, ServiceRelationServerSideMetrics.class);
 		ServiceRelationServerSideMetrics metrics = new ServiceRelationServerSideMetrics();
 		metrics.setEntityId("entity_id");
@@ -66,7 +61,12 @@ public class PrometheusMeterMapperTest {
 		metrics.setSourceServiceId("source_svc_id");
 		metrics.setTimeBucket(TimeBucket.getTimeBucket(timestamp, DownSampling.Minute));
 		
+		System.out.println("id:" + metrics.id());
 		for(int i=0;i<10;i++) {
+			List<Metrics> cache = dao.multiGet(model, Collections.singletonList(metrics.id()));
+			if(cache.size() > 0) {
+				metrics.combine(cache.get(0));
+			}
 			InsertRequest mfs = dao.prepareBatchInsert(model, metrics);
 			PrometheusInsertRequest _mfs = (PrometheusInsertRequest) mfs;
 			new Collector() {

@@ -9,7 +9,7 @@ import java.util.Map;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.manual.endpoint.EndpointTraffic;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Counter;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeCounter;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
@@ -17,7 +17,7 @@ import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(EndpointTraffic.class)
 @Deprecated
-public class EndpointTrafficMapper extends PrometheusMeterMapper<EndpointTraffic, Counter>{
+public class EndpointTrafficMapper extends PrometheusMeterMapper<EndpointTraffic, PromeCounter>{
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, EndpointTraffic metrics, int age) {
@@ -42,9 +42,9 @@ public class EndpointTrafficMapper extends PrometheusMeterMapper<EndpointTraffic
 	}
 
 	@Override
-	public EndpointTraffic prometheusToSkywalking(Model model, List<Counter> metricList) {
+	public EndpointTraffic prometheusToSkywalking(Model model, List<PromeCounter> metricList) {
 		try {
-			Counter metric = metricList.get(0);
+			PromeCounter metric = metricList.get(0);
 			EndpointTraffic metrics = (EndpointTraffic) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 			metrics.setServiceId(metric.getLabels().get(EndpointTraffic.SERVICE_ID));

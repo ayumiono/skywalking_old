@@ -8,14 +8,14 @@ import java.util.Map;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.metrics.ApdexMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(ApdexMetrics.class)
-public class ApdexMetricsMapper extends PrometheusMeterMapper<ApdexMetrics, Gauge> {
+public class ApdexMetricsMapper extends PrometheusMeterMapper<ApdexMetrics, PromeGauge> {
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, ApdexMetrics metrics, int age) {
@@ -66,7 +66,7 @@ public class ApdexMetricsMapper extends PrometheusMeterMapper<ApdexMetrics, Gaug
 	}
 	
 	@Override
-	public ApdexMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public ApdexMetrics prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
 			ApdexMetrics metrics = (ApdexMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metricList.get(0).getLabels());
@@ -84,11 +84,11 @@ public class ApdexMetricsMapper extends PrometheusMeterMapper<ApdexMetrics, Gaug
 		}
 	}
 
-	public void setPersistenceColumns(Model model, List<Gauge> metricList, ApdexMetrics metrics) {
+	public void setPersistenceColumns(Model model, List<PromeGauge> metricList, ApdexMetrics metrics) {
 		if(metricList.size() != 4) {
 			throw new IllegalArgumentException("expect 4 metrics but found " + metricList.size());
 		}
-		for(Gauge metric : metricList) {
+		for(PromeGauge metric : metricList) {
 			if(!metric.getLabels().containsKey("annotation")) {
 				metrics.setValue(new BigDecimal(metric.getValue()).intValue());
 				metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));

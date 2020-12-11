@@ -16,10 +16,10 @@ import org.apache.skywalking.oap.server.core.storage.IMetricsDAO;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
 import org.apache.skywalking.oap.server.library.client.request.InsertRequest;
 import org.apache.skywalking.oap.server.library.client.request.UpdateRequest;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.mapper.PrometheusMeterMapper;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.JSONParser;
-import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.MetricFamily;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetric;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetricFamily;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
@@ -37,7 +37,7 @@ public class MetricsPrometheusDAO implements IMetricsDAO {
 	
 	protected final PrometheusHttpApi prometheusHttpApi;
 	
-	protected final PrometheusMeterMapper<Metrics, Metric> mapper;
+	protected final PrometheusMeterMapper<Metrics, PromeMetric> mapper;
 	
 //	private Map<String/*原始格式id，带时间信息*/, MetricsWithCachedtime> _quick_cache = new ConcurrentHashMap<>();
 //	
@@ -155,19 +155,24 @@ public class MetricsPrometheusDAO implements IMetricsDAO {
 	@Override
 	public List<Metrics> multiGet(Model model, List<String> ids) throws IOException {
 		JSONParser parser = new JSONParser(prometheusHttpApi.query(model, ids));
-		MetricFamily metricFamily = parser.parse();
+		PromeMetricFamily metricFamily = parser.parse();
 		if(metricFamily == null) {
 			return Collections.emptyList();
 		}
 		
 		List<Metrics> result = new ArrayList<Metrics>();
 		
-		Map<String, List<Metric>> idGroup = metricFamily.getMetrics().stream().collect(Collectors.groupingBy(metrics->{
-			String id = metrics.getLabels().get("id");//FIXME 会不会有漏洞
+		Map<String/*id*/, List<PromeMetric>> idGroup = metricFamily.getMetrics().stream().collect(Collectors.groupingBy(metric->{
+			String id = metric.getLabels().get("id");//FIXME 会不会有漏洞
+			int age = metric.getAge();
+			idAgeCache.put(
+					TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()) + 
+					org.apache.skywalking.oap.server.core.Const.ID_CONNECTOR + 
+					id, age);
 			return id;
 		}));
 		
-		for(Entry<String, List<Metric>> entry : idGroup.entrySet()) {
+		for(Entry<String, List<PromeMetric>> entry : idGroup.entrySet()) {
 			try {
 				Metrics metrics = mapper.prometheusToSkywalking(model, entry.getValue());
 				result.add(metrics);
@@ -176,24 +181,19 @@ public class MetricsPrometheusDAO implements IMetricsDAO {
 						+ " id:" + StringUtils.join(ids, ",") + e.getMessage(), e);
 			}
 		}
+		
+		prometheusHttpApi.delete(model, metricFamily);
 		return result;
 	}
+	
+	private Map<String, Integer> idAgeCache = new HashMap<String, Integer>();
 	
 	@Override
 	public InsertRequest prepareBatchInsert(Model model, Metrics metrics) throws IOException {
 		try {
-			String meanningFulId = StringUtils.substringAfter(metrics.id(), org.apache.skywalking.oap.server.core.Const.ID_CONNECTOR);
-			String timebucketStr = StringUtils.substringBefore(metrics.id(), org.apache.skywalking.oap.server.core.Const.ID_CONNECTOR);
-			long timestamp  = TimeBucket.getTimestamp(Long.parseLong(timebucketStr), model.getDownsampling());
-			
-			Map<String,String> labels = new HashMap<String, String>();
-			labels.put("id", meanningFulId);
-			int age = prometheusHttpApi.queryAge(model.getName(), labels, timestamp);
-			if(age > 0) {
-				labels.put("age", age+"");
-				prometheusHttpApi.delete(model, labels, timestamp, timestamp);
-			}
-			MetricFamilySamples metricFamily = mapper.skywalkingToPrometheus(model, metrics, age+1);
+			Integer age = idAgeCache.remove(metrics.id());
+			age = age == null ? 0 : age;
+			MetricFamilySamples metricFamily = mapper.skywalkingToPrometheus(model, metrics, age + 1);
 			return new PrometheusInsertRequest(metricFamily);
 		} catch (Exception e) {
 			log.error("model_name:" + model.getName() + " model_class:"+model.getStorageModelClazz().getName() 

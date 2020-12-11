@@ -177,6 +177,7 @@ public class ContextManager implements BootService {
     }
 
     private static void stopSpan(AbstractSpan span, final AbstractTracerContext context) {
+    	logger.debug("ContextManager stopSpan invoked");
         if (context.stopSpan(span)) {
             CONTEXT.remove();
             RUNTIME_CONTEXT.remove();

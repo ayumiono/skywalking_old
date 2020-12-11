@@ -1,12 +1,15 @@
 package org.apache.skywalking.oap.server.storage.plugin.prometheus.util;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 import java.util.StringJoiner;
 
@@ -167,6 +170,48 @@ public class PrometheusHttpApi {
 		return null;
 	}
 	
+	public boolean delete(Model model, PromeMetricFamily hisotryMetric) {
+		try {
+			boolean regx = HistogramMetrics.class.isAssignableFrom(model.getStorageModelClazz()) || PercentileMetrics.class.isAssignableFrom(model.getStorageModelClazz());
+			String nameMatch = regx ? "__name__=~\"" + model.getName() + ".*\"" : "__name__=\"" + model.getName() + "\"";
+			hisotryMetric.getMetrics().stream().collect(Collectors.groupingBy((metric)->{
+				return metric.getTimestamp();
+			})).entrySet().forEach((entry)->{//group by timestamp
+				long timestamp = entry.getKey();
+				List<PromeMetric> metrics = entry.getValue();
+				metrics.stream().collect(Collectors.groupingBy((m)->{//group by age
+					return m.getAge();
+				})).entrySet().forEach(e->{
+					int age = e.getKey();
+					List<PromeMetric> ms = entry.getValue();
+					String idMatch = "id=\"" + StringUtils.join(ms.stream().map(f->f.getId()).collect(Collectors.toList()), "|") + "\"";
+					String ageMatch = "age=\"" + age + "\"";
+					String match = "{" + nameMatch + "," + idMatch + "," + ageMatch + "}";
+					try {
+						URIBuilder uriBuilder = new URIBuilder(prometheusAddress + DELETE);
+						
+						uriBuilder.addParameter("match[]", match);
+						uriBuilder.addParameter("start", formatTimestamp(timestamp));
+						uriBuilder.addParameter("end", formatTimestamp(timestamp));
+						HttpPost request = new HttpPost(uriBuilder.build());
+						CloseableHttpResponse response = client.execute(request);
+						if(response.getStatusLine().getStatusCode() == 204) {
+							log.error("delete prometheus history data failed:" + response.getStatusLine().getStatusCode());
+						}else {
+							String responseStr = EntityUtils.toString(response.getEntity());
+							log.error("delete by ids failed:{}", responseStr);
+						}
+					} catch (URISyntaxException | IOException e1) {
+						log.error(e1.getMessage(), e1);
+					}
+				});
+			});;
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
+		return false;
+	}
+	
 	public boolean delete(Model model, List<String> ids) {
 		try {
 			URIBuilder uriBuilder = new URIBuilder(prometheusAddress + DELETE);
@@ -190,7 +235,7 @@ public class PrometheusHttpApi {
 				uriBuilder.addParameter("start", timestampStr);
 				uriBuilder.addParameter("end", timestampStr);
 				
-				HttpGet request = new HttpGet(uriBuilder.build());
+				HttpPost request = new HttpPost(uriBuilder.build());
 				
 				CloseableHttpResponse response = client.execute(request);
 				

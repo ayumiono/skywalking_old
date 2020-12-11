@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.skywalking.oap.server.core.analysis.DownSampling;
+import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
 
 import io.prometheus.client.Collector;
@@ -47,9 +49,12 @@ public class AppTest extends TestCase {
 //			gauge.labels("asdfa_x121dfd").inc();
 //			Thread.sleep(5000);
 //		}
-//		long timestapm = System.currentTimeMillis();
-		long timestapm = 1607513370021L;
+		long timestapm = System.currentTimeMillis();
+//		long timestapm = 1607513370021L;
+		long timebucket = TimeBucket.getTimeBucket(timestapm, DownSampling.Minute);
+		timestapm = TimeBucket.getTimestamp(timebucket, DownSampling.Minute);
 		System.out.println("timestamp:"+timestapm);
+		final long timestamp = timestapm;
 		Map<String, String> labels = new HashMap<>();
 		labels.put("service_id", "asdfa_x121dfd");
 		labels.put("age", "1");
@@ -60,14 +65,14 @@ public class AppTest extends TestCase {
 //			}
 //		}.register();
 //		Thread.sleep(30000);
-		labels.put("age", "2");
+//		labels.put("age", "2");
 //		CollectorRegistry.defaultRegistry.clear();
 		new Collector() {
 			@Override
 			public List<MetricFamilySamples> collect() {
 				return Collections.singletonList(new MetricFamilySamples("updatable_test", Type.GAUGE, "", 
 						Collections.singletonList(new Sample("updatable_test", new ArrayList<>(labels.keySet()), new ArrayList<>(labels.values()), 
-								2, timestapm))));
+								1, timestamp))));
 			}
 		}.register();
 	}

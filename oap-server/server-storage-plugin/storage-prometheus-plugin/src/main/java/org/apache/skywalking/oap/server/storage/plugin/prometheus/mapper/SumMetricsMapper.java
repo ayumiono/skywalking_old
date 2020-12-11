@@ -9,14 +9,14 @@ import java.util.Map;
 import org.apache.skywalking.oap.server.core.analysis.TimeBucket;
 import org.apache.skywalking.oap.server.core.analysis.metrics.SumMetrics;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
-import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Gauge;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeGauge;
 
 import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.Collector.Type;
 
 @PrometheusMetricsMapper(SumMetrics.class)
-public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, Gauge>{
+public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, PromeGauge>{
 
 	@Override
 	public MetricFamilySamples skywalkingToPrometheus(Model model, SumMetrics metrics, int age) {
@@ -39,9 +39,9 @@ public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, Gauge>{
 	}
 	
 	@Override
-	public SumMetrics prometheusToSkywalking(Model model, List<Gauge> metricList) {
+	public SumMetrics prometheusToSkywalking(Model model, List<PromeGauge> metricList) {
 		try {
-			Gauge metric = metricList.get(0);
+			PromeGauge metric = metricList.get(0);
 			SumMetrics metrics = (SumMetrics) model.getStorageModelClazz().getDeclaredConstructor().newInstance();
 			PrometheusMeterMapper.setSourceColumnsProperties(model, metrics, metric.getLabels());
 			
@@ -58,7 +58,7 @@ public class SumMetricsMapper extends PrometheusMeterMapper<SumMetrics, Gauge>{
 		}
 	}
 
-	public void setPersistenceColumns(Model model, Gauge metric, SumMetrics metrics) {
+	public void setPersistenceColumns(Model model, PromeGauge metric, SumMetrics metrics) {
 		metrics.setValue(new BigDecimal(metric.getValue()).longValue());
 		metrics.setTimeBucket(TimeBucket.getTimeBucket(metric.getTimestamp(), model.getDownsampling()));
 	}

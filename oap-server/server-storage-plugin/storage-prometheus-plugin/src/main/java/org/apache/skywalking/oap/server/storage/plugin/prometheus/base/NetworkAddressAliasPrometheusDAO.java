@@ -10,7 +10,8 @@ import org.apache.skywalking.oap.server.core.analysis.manual.networkalias.Networ
 import org.apache.skywalking.oap.server.core.storage.cache.INetworkAddressAliasDAO;
 import org.apache.skywalking.oap.server.library.util.prometheus.metrics.Metric;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.JSONParser;
-import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.MetricFamily;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetric;
+import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PromeMetricFamily;
 import org.apache.skywalking.oap.server.storage.plugin.prometheus.util.PrometheusHttpApi;
 
 import lombok.RequiredArgsConstructor;
@@ -30,13 +31,13 @@ public class NetworkAddressAliasPrometheusDAO implements INetworkAddressAliasDAO
 
 			JSONParser parser = new JSONParser(api.rangeQuery(NetworkAddressAlias.INDEX_NAME, null, start));
 
-			MetricFamily mf = parser.parse();
+			PromeMetricFamily mf = parser.parse();
 
 			if (mf == null) {
 				return result;
 			}
 
-			for (Metric promeMetric : mf.getMetrics()) {
+			for (PromeMetric promeMetric : mf.getMetrics()) {
 				NetworkAddressAlias model = new NetworkAddressAlias();
 				Map<String, String> labels = promeMetric.getLabels();
 				long timestamp = promeMetric.getTimestamp();
