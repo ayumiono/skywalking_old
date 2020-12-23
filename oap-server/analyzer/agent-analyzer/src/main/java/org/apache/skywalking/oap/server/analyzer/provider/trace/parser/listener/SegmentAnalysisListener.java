@@ -122,7 +122,8 @@ public class SegmentAnalysisListener implements FirstAnalysisListener, EntryAnal
     @Override
     public void parseSegment(SegmentObject segmentObject) {
         if (sampleStatus.equals(SAMPLE_STATUS.UNKNOWN) || sampleStatus.equals(SAMPLE_STATUS.IGNORE)) {
-            if (sampler.shouldSample(segmentObject.getTraceSegmentId())) {
+        	//modify by xuelong.chen distributed trace has uniq traceId, which should be used when sampling
+            if (sampler.shouldSample(segmentObject.getTraceId())) {
                 sampleStatus = SAMPLE_STATUS.SAMPLED;
             } else {
                 sampleStatus = SAMPLE_STATUS.IGNORE;
