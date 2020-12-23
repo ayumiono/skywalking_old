@@ -8,7 +8,6 @@ import org.apache.skywalking.oap.server.core.query.input.Duration;
 import org.apache.skywalking.oap.server.core.query.input.TopNCondition;
 import org.apache.skywalking.oap.server.core.query.type.KeyValue;
 import org.apache.skywalking.oap.server.core.query.type.SelectedRecord;
-import org.apache.skywalking.oap.server.core.storage.StorageDAO;
 import org.apache.skywalking.oap.server.core.storage.query.IAggregationQueryDAO;
 import org.apache.skywalking.oap.server.storage.plugin.mixed.StorageModuleMixedConfig;
 
@@ -24,8 +23,7 @@ public class IAggregationQueryDAOMixedImpl implements IAggregationQueryDAO {
 	@Override
 	public List<SelectedRecord> sortMetrics(TopNCondition condition, String valueColumnName, Duration duration,
 			List<KeyValue> additionalConditions) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		return candidates.get(config.getMetrics()).sortMetrics(condition, valueColumnName, duration, additionalConditions);
 	}
 
 }

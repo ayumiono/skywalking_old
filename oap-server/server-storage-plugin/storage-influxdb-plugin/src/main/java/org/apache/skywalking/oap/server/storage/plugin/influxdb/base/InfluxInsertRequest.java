@@ -18,9 +18,15 @@
 
 package org.apache.skywalking.oap.server.storage.plugin.influxdb.base;
 
-import com.google.common.collect.Maps;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.skywalking.oap.server.core.analysis.metrics.DataTable;
+import org.apache.skywalking.oap.server.core.analysis.metrics.HistogramMetrics;
+import org.apache.skywalking.oap.server.core.analysis.metrics.PercentileMetrics;
 import org.apache.skywalking.oap.server.core.storage.StorageBuilder;
 import org.apache.skywalking.oap.server.core.storage.StorageData;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
@@ -29,18 +35,30 @@ import org.apache.skywalking.oap.server.core.storage.type.StorageDataComplexObje
 import org.apache.skywalking.oap.server.library.client.request.InsertRequest;
 import org.apache.skywalking.oap.server.library.client.request.UpdateRequest;
 import org.apache.skywalking.oap.server.storage.plugin.influxdb.InfluxConstants;
+import org.influxdb.dto.BatchPoints;
 import org.influxdb.dto.Point;
+
+import com.google.common.collect.Maps;
 
 /**
  * InfluxDB Point wrapper.
  */
 public class InfluxInsertRequest implements InsertRequest, UpdateRequest {
-    private Point.Builder builder;
+    private BatchPoints.Builder builder;
     private Map<String, Object> fields = Maps.newHashMap();
+    private List<Point.Builder> pointBuilders;
+    
+    private static final int[] RANKS = {
+        50,
+        75,
+        90,
+        95,
+        99
+    };
 
     public InfluxInsertRequest(Model model, StorageData storageData, StorageBuilder storageBuilder) {
         Map<String, Object> objectMap = storageBuilder.data2Map(storageData);
-
+        pointBuilders = new ArrayList<Point.Builder>();
         for (ModelColumn column : model.getColumns()) {
             Object value = objectMap.get(column.getColumnName().getName());
 
@@ -53,13 +71,52 @@ public class InfluxInsertRequest implements InsertRequest, UpdateRequest {
                 fields.put(column.getColumnName().getStorageName(), value);
             }
         }
-        builder = Point.measurement(model.getName())
-                       .addField(InfluxConstants.ID_COLUMN, storageData.id())
-                       .fields(fields);
+        
+        if(storageData instanceof PercentileMetrics) {
+        	PercentileMetrics _storageData = (PercentileMetrics) storageData;
+        	DataTable percentileVaules = _storageData.getPercentileValues();
+        	/*DataTable dataset = _storageData.getDataset(); PercentileMetrics中的dataset没有HistogramMetrics这样有maxNumOfSteps和step，导致bucket太离散不适合做tag
+        	List<String> sortedKeys = dataset.sortedKeys(Comparator.comparingInt(Integer::parseInt));
+        	sortedKeys.forEach(key->{
+        		Long value = dataset.get(key);
+        		Point.Builder pb = Point.measurement(model.getName() + "_bucket")
+                .addField(InfluxConstants.ID_COLUMN, storageData.id())
+                .addField("value", value)
+                .tag("_le", key);
+        		pointBuilders.add(pb);
+        	});*/
+        	
+        	List<String> sortedKeys = percentileVaules.sortedKeys(Comparator.comparingInt(Integer::parseInt));
+        	sortedKeys.forEach(key->{
+        		Long value = percentileVaules.get(key);
+        		Point.Builder pb = Point.measurement(model.getName() + "_quantile")
+                .addField(InfluxConstants.ID_COLUMN, storageData.id())
+                .addField("value", value)
+                .tag("quantile", "p" + RANKS[Integer.parseInt(key)]);
+        		pointBuilders.add(pb);
+        	});
+        } else if(storageData instanceof HistogramMetrics) {
+        	HistogramMetrics _storageData = (HistogramMetrics) storageData;
+        	DataTable dataset = _storageData.getDataset();
+        	final List<String> sortedKeys = dataset.sortedKeys(Comparator.comparingInt(Integer::parseInt));
+        	sortedKeys.forEach(key->{
+        		Long value = dataset.get(key);
+        		Point.Builder pb = Point.measurement(model.getName() + "_bucket")
+                .addField(InfluxConstants.ID_COLUMN, storageData.id())
+                .addField("value", value)
+                .tag("le", key);
+        		pointBuilders.add(pb);
+        	});
+        }
+        Point.Builder pb = Point.measurement(model.getName())
+                .addField(InfluxConstants.ID_COLUMN, storageData.id())
+                .fields(fields);
+    	pointBuilders.add(pb);
+        builder = BatchPoints.builder();
     }
 
     public InfluxInsertRequest time(long time, TimeUnit unit) {
-        builder.time(time, unit);
+    	pointBuilders.forEach(pb->pb.time(time, unit));
         return this;
     }
 
@@ -68,7 +125,10 @@ public class InfluxInsertRequest implements InsertRequest, UpdateRequest {
         return this;
     }
 
-    public Point getPoint() {
+    public BatchPoints getPoint() {
+    	pointBuilders.forEach(pb->{
+    		builder.point(pb.build());
+    	});
         return builder.build();
     }
 }

@@ -18,12 +18,12 @@
 
 package org.apache.skywalking.oap.server.analyzer.provider.trace.parser.listener;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import static org.apache.skywalking.oap.server.analyzer.provider.trace.parser.SpanTags.LOGIC_ENDPOINT;
+
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.skywalking.apm.network.common.v3.KeyStringValuePair;
 import org.apache.skywalking.apm.network.language.agent.v3.SegmentObject;
 import org.apache.skywalking.apm.network.language.agent.v3.SegmentReference;
@@ -31,7 +31,11 @@ import org.apache.skywalking.apm.network.language.agent.v3.SpanLayer;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanObject;
 import org.apache.skywalking.apm.network.language.agent.v3.SpanType;
 import org.apache.skywalking.apm.util.StringUtil;
+import org.apache.skywalking.oap.server.analyzer.module.AnalyzerModule;
+import org.apache.skywalking.oap.server.analyzer.provider.AnalyzerModuleConfig;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.DBLatencyThresholdsAndWatcher;
+import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.IGroupParserService;
+import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.SpanTags;
 import org.apache.skywalking.oap.server.core.Const;
 import org.apache.skywalking.oap.server.core.CoreModule;
 import org.apache.skywalking.oap.server.core.analysis.IDManager;
@@ -42,15 +46,18 @@ import org.apache.skywalking.oap.server.core.cache.NetworkAddressAliasCache;
 import org.apache.skywalking.oap.server.core.config.NamingControl;
 import org.apache.skywalking.oap.server.core.source.DatabaseSlowStatement;
 import org.apache.skywalking.oap.server.core.source.DetectPoint;
+import org.apache.skywalking.oap.server.core.source.Endpoint;
 import org.apache.skywalking.oap.server.core.source.EndpointRelation;
 import org.apache.skywalking.oap.server.core.source.RequestType;
 import org.apache.skywalking.oap.server.core.source.ServiceInstanceRelation;
 import org.apache.skywalking.oap.server.core.source.SourceReceiver;
 import org.apache.skywalking.oap.server.library.module.ModuleManager;
-import org.apache.skywalking.oap.server.analyzer.provider.AnalyzerModuleConfig;
-import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.SpanTags;
 
-import static org.apache.skywalking.oap.server.analyzer.provider.trace.parser.SpanTags.LOGIC_ENDPOINT;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * MultiScopesSpanListener includes the most segment to source(s) logic.
@@ -69,6 +76,7 @@ public class MultiScopesAnalysisListener implements EntryAnalysisListener, ExitA
     private final AnalyzerModuleConfig config;
     private final NetworkAddressAliasCache networkAddressAliasCache;
     private final NamingControl namingControl;
+    private final IGroupParserService groupParserService;
 
     @Override
     public boolean containsPoint(Point point) {
@@ -273,7 +281,9 @@ public class MultiScopesAnalysisListener implements EntryAnalysisListener, ExitA
             sourceReceiver.receive(entrySourceBuilder.toAll());
             sourceReceiver.receive(entrySourceBuilder.toService());
             sourceReceiver.receive(entrySourceBuilder.toServiceInstance());
-            sourceReceiver.receive(entrySourceBuilder.toEndpoint());
+            Endpoint endpoint = entrySourceBuilder.toEndpoint();
+            endpoint.setGroup(StringUtils.join(groupParserService.group(endpoint), ","));
+            sourceReceiver.receive(endpoint);
             sourceReceiver.receive(entrySourceBuilder.toServiceRelation());
             sourceReceiver.receive(entrySourceBuilder.toServiceInstanceRelation());
             EndpointRelation endpointRelation = entrySourceBuilder.toEndpointRelation();
@@ -359,6 +369,7 @@ public class MultiScopesAnalysisListener implements EntryAnalysisListener, ExitA
         private final SourceReceiver sourceReceiver;
         private final NetworkAddressAliasCache networkAddressAliasCache;
         private final NamingControl namingControl;
+        private final IGroupParserService groupParserService;
 
         public Factory(ModuleManager moduleManager) {
             this.sourceReceiver = moduleManager.find(CoreModule.NAME).provider().getService(SourceReceiver.class);
@@ -368,12 +379,13 @@ public class MultiScopesAnalysisListener implements EntryAnalysisListener, ExitA
             this.namingControl = moduleManager.find(CoreModule.NAME)
                                               .provider()
                                               .getService(NamingControl.class);
+            this.groupParserService = moduleManager.find(AnalyzerModule.NAME).provider().getService(IGroupParserService.class);
         }
 
         @Override
         public AnalysisListener create(ModuleManager moduleManager, AnalyzerModuleConfig config) {
             return new MultiScopesAnalysisListener(
-                sourceReceiver, config, networkAddressAliasCache, namingControl);
+                sourceReceiver, config, networkAddressAliasCache, namingControl, groupParserService);
         }
     }
 }

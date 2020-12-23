@@ -56,6 +56,9 @@ public class MetricsDAO implements IMetricsDAO {
         this.storageBuilder = storageBuilder;
     }
 
+    /**
+     * TODO 没有使用tag，查询性能较差
+     */
     @Override
     public List<Metrics> multiGet(Model model, List<String> ids) throws IOException {
         WhereQueryImpl<SelectQueryImpl> query = select()

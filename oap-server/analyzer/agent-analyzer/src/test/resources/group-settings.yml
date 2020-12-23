@@ -1,0 +1,16 @@
+groupRules:
+  - group: ~/([a-z0-9]*)/
+    labelDic: 
+      lz: 隆重
+      gl: 钢联
+      v4: 未知
+    service:
+      - mysteel_api_gateway:
+      - banksteel_api_gateway:
+  - group: 分组测试
+    service:
+      - apm-test-provider:
+          endpoint:
+            - "me.ayumi.prometheus.demo.Interface0.id()"
+            - "me.ayumi.prometheus.demo.Interface1.id()"
+            - "me.ayumi.prometheus.demo.Interface2.id()"

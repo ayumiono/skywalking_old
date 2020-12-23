@@ -18,39 +18,38 @@
 
 package org.apache.skywalking.oap.server.core.source;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import static org.apache.skywalking.oap.server.core.source.DefaultScopeDefine.ENDPOINT_GROUP;
+import static org.apache.skywalking.oap.server.core.source.DefaultScopeDefine.ENDPOINT_CATALOG_NAME;
+
 import org.apache.skywalking.apm.util.StringUtil;
 import org.apache.skywalking.oap.server.core.analysis.IDManager;
 import org.apache.skywalking.oap.server.core.analysis.NodeType;
 
-import static org.apache.skywalking.oap.server.core.source.DefaultScopeDefine.ENDPOINT;
-import static org.apache.skywalking.oap.server.core.source.DefaultScopeDefine.ENDPOINT_CATALOG_NAME;
+import lombok.Getter;
+import lombok.Setter;
 
-@ScopeDeclaration(id = ENDPOINT, name = "Endpoint", catalog = ENDPOINT_CATALOG_NAME)
+/**
+ * add by xuelong.chen
+ * @author Administrator
+ */
+@ScopeDeclaration(id = ENDPOINT_GROUP, name = "EndpointGroup", catalog = ENDPOINT_CATALOG_NAME)
 @ScopeDefaultColumn.VirtualColumnDefinition(fieldName = "entityId", columnName = "entity_id", isID = true, type = String.class)
-@Slf4j
-public class Endpoint extends Source {
+public class EndpointGroup extends Source {
     private String entityId;
 
     @Override
     public int scope() {
-        return DefaultScopeDefine.ENDPOINT;
+        return ENDPOINT_GROUP;
     }
 
     @Override
     public String getEntityId() {
         if (StringUtil.isEmpty(entityId)) {
-            entityId = IDManager.EndpointID.buildId(serviceId, name);
+            entityId = IDManager.EndpointID.buildId(serviceId, group);
         }
         return entityId;
     }
     
-    /**
-     * add by xuelong.chen. to resolve finding endpoints within the same group quickly, add this field
-     * as a mapping property in ES, as a field in influxdb
-     */
     @Getter
     @Setter
     @ScopeDefaultColumn.DefinedByField(columnName = "group")
@@ -58,7 +57,7 @@ public class Endpoint extends Source {
 
     @Getter
     @Setter
-    @ScopeDefaultColumn.DefinedByField(columnName = "name", requireDynamicActive = true)
+//    @ScopeDefaultColumn.DefinedByField(columnName = "name", requireDynamicActive = true)
     private String name;
     @Getter
     @ScopeDefaultColumn.DefinedByField(columnName = "service_id")

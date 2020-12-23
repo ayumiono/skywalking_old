@@ -52,7 +52,7 @@ public class BatchDAO implements IBatchDAO {
 
         final BatchPoints.Builder builder = BatchPoints.builder();
         prepareRequests.forEach(e -> {
-            builder.point(((InfluxInsertRequest) e).getPoint());
+        	builder.points(((InfluxInsertRequest) e).getPoint().getPoints());
         });
 
         client.write(builder.build());

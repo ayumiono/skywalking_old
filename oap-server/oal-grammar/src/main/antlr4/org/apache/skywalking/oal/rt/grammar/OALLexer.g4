@@ -44,6 +44,7 @@ SRC_SERVICE_INSTANCE_CLR_CPU: 'ServiceInstanceCLRCPU';
 SRC_SERVICE_INSTANCE_CLR_GC: 'ServiceInstanceCLRGC';
 SRC_SERVICE_INSTANCE_CLR_THREAD: 'ServiceInstanceCLRThread';
 SRC_ENVOY_INSTANCE_METRIC: 'EnvoyInstanceMetric';
+SRC_ENDPOINT_GROUP: 'EndpointGroup';
 
 //hard code entities, only used when need to be deactived.
 //Disable is targeting @Stream#name

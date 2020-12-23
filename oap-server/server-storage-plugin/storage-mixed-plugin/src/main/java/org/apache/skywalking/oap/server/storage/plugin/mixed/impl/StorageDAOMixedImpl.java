@@ -128,42 +128,29 @@ public class StorageDAOMixedImpl implements StorageDAO {
 
 		@Override
 		public List<Metrics> multiGet(Model model, List<String> ids) throws IOException {
-			//这里需要做些硬编码工作，因为类似ServiceTraffic这类不需要更新的指标，没有时序的概念。同时这类指标又不符合RecordPersistenceWorker的处理逻辑，所以这里只能强制存到elasticsearh中
-//			if(isNotSupportUpdate(model.getStorageModelClazz())) {
-//				return candidates.get(config.getRecord()).multiGet(model, ids);
-//			}
-//			return candidates.get(config.getMetrics()).multiGet(model, ids);
-			return candidates.get(config.getRecord()).multiGet(model, ids);
+			return candidates.get(config.getMetrics()).multiGet(model, ids);
 		}
 
 		@Override
 		public InsertRequest prepareBatchInsert(Model model, Metrics metrics) throws IOException {
-//			if(isNotSupportUpdate(model.getStorageModelClazz())) {
-//				return candidates.get(config.getRecord()).prepareBatchInsert(model, metrics);
-//			}
-			if(!isNotSupportUpdate(model.getStorageModelClazz())) {
-				candidates.get(config.getMetrics()).prepareBatchInsert(model, metrics);
-			}
-			return candidates.get(config.getRecord()).prepareBatchInsert(model, metrics);
+			return candidates.get(config.getMetrics()).prepareBatchInsert(model, metrics);
 		}
 
 		@Override
 		public UpdateRequest prepareBatchUpdate(Model model, Metrics metrics) throws IOException {
-			if(!isNotSupportUpdate(model.getStorageModelClazz())) {
-				candidates.get(config.getMetrics()).prepareBatchUpdate(model, metrics);
-			}
-			return candidates.get(config.getRecord()).prepareBatchUpdate(model, metrics);
+			return candidates.get(config.getMetrics()).prepareBatchUpdate(model, metrics);
 		}
 	}
 
 	
 	private ConcurrentHashMap<Class<?>, Boolean> cache = new ConcurrentHashMap<Class<?>, Boolean>();
+	
 	/**
 	 * 满足下面条件的指标存到record存储（默认elasticsearch）
 	 * @param metricsClass
 	 * @return
 	 */
-	private boolean isNotSupportUpdate(Class<?> metricsClass) {
+	protected boolean isNotSupportUpdate(Class<?> metricsClass) {
 		if(!cache.contains(metricsClass)) {
 			final MetricsExtension metricsExtension = metricsClass.getAnnotation(MetricsExtension.class);
 			if(metricsExtension != null) {
@@ -181,5 +168,4 @@ public class StorageDAOMixedImpl implements StorageDAO {
 		}
 		return isNotSupportUpdate;
 	}
-	
 }

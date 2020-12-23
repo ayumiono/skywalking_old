@@ -20,12 +20,14 @@ package org.apache.skywalking.oap.server.analyzer.provider;
 
 import java.util.Collections;
 import java.util.List;
-import lombok.Getter;
-import lombok.Setter;
+
 import org.apache.skywalking.oap.server.analyzer.provider.trace.DBLatencyThresholdsAndWatcher;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.TraceSampleRateWatcher;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.UninstrumentedGatewaysConfig;
 import org.apache.skywalking.oap.server.library.module.ModuleConfig;
+
+import lombok.Getter;
+import lombok.Setter;
 
 public class AnalyzerModuleConfig extends ModuleConfig {
     /**
@@ -48,6 +50,7 @@ public class AnalyzerModuleConfig extends ModuleConfig {
     @Setter
     @Getter
     private String slowDBAccessThreshold = "default:200";
+    
     @Setter
     @Getter
     private DBLatencyThresholdsAndWatcher dbLatencyThresholdsAndWatcher;

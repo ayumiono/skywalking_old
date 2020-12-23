@@ -18,22 +18,24 @@
 
 package org.apache.skywalking.oap.server.storage.plugin.influxdb;
 
-import com.google.common.collect.Maps;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+
 import org.apache.skywalking.oap.server.core.analysis.manual.endpoint.EndpointTraffic;
 import org.apache.skywalking.oap.server.core.analysis.manual.instance.InstanceTraffic;
 import org.apache.skywalking.oap.server.core.analysis.manual.segment.SegmentRecord;
 import org.apache.skywalking.oap.server.core.analysis.manual.service.ServiceTraffic;
 import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
-import org.apache.skywalking.oap.server.core.analysis.record.Record;
 import org.apache.skywalking.oap.server.core.storage.model.ColumnName;
 import org.apache.skywalking.oap.server.core.storage.model.Model;
 import org.apache.skywalking.oap.server.core.storage.model.ModelColumn;
+
+import com.google.common.collect.Maps;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -71,9 +73,9 @@ public class TableMetaInfo {
             if (storageAndColumnMap.containsKey(Metrics.ENTITY_ID)) {
                 storageAndTagMap.put(Metrics.ENTITY_ID, InfluxConstants.TagName.ENTITY_ID);
             }
-            if (storageAndColumnMap.containsKey(Record.TIME_BUCKET)) {
-                storageAndTagMap.put(Record.TIME_BUCKET, InfluxConstants.TagName.TIME_BUCKET);
-            }
+//            if (storageAndColumnMap.containsKey(Record.TIME_BUCKET)) {
+//                storageAndTagMap.put(Record.TIME_BUCKET, InfluxConstants.TagName.TIME_BUCKET);
+//            }
             if (storageAndColumnMap.containsKey(ServiceTraffic.NODE_TYPE)) {
                 storageAndTagMap.put(ServiceTraffic.NODE_TYPE, InfluxConstants.TagName.NODE_TYPE);
             }

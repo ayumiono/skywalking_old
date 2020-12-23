@@ -36,7 +36,7 @@ public class IBatchDAOMixedImpl implements IBatchDAO {
 		}else if(clazz == ElasticSearchInsertRequest.class || clazz == ElasticSearchUpdateRequest.class) {
 			candidates.get("elasticsearch").asynchronous(insertRequest);
 		}else if(clazz == InfluxInsertRequest.class) {
-			candidates.get("influx").asynchronous(insertRequest);
+			candidates.get("influxdb").asynchronous(insertRequest);
 		}else if(clazz == SQLExecutor.class) {
 			candidates.get("mysql").asynchronous(insertRequest);
 		}else {
@@ -54,7 +54,7 @@ public class IBatchDAOMixedImpl implements IBatchDAO {
 			}else if(clazz == ElasticSearchInsertRequest.class || clazz == ElasticSearchUpdateRequest.class) {
 				return "elasticsearch";
 			}else if(clazz == InfluxInsertRequest.class) {
-				return "influx";
+				return "influxdb";
 			}else if(clazz == SQLExecutor.class) {
 				return "mysql";
 			}

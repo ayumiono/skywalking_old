@@ -54,15 +54,11 @@ import org.apache.skywalking.oap.server.storage.plugin.mixed.impl.ITopologyQuery
 import org.apache.skywalking.oap.server.storage.plugin.mixed.impl.ITraceQueryDAOMixedImpl;
 import org.apache.skywalking.oap.server.storage.plugin.mixed.impl.StorageDAOMixedImpl;
 import org.apache.skywalking.oap.server.storage.plugin.mixed.impl.UITemplateManagementDAOMixedImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class StorageModuleMixedProvider extends ModuleProvider {
-
-	private static final Logger logger = LoggerFactory.getLogger(StorageModuleMixedProvider.class);
 
 	protected final StorageModuleMixedConfig config;
 
@@ -105,6 +101,13 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 			log.debug("dependency {} start", dependency.name());
 			dependency.start();
 		}
+        /*try {
+        	StorageMixedInstaller installer = new StorageMixedInstaller(null, getManager(), config);
+			getManager().find(CoreModule.NAME).provider().getService(ModelCreator.class).addModelListener(installer);
+		} catch (ServiceNotProvidedException | DuplicateProviderException | ProviderNotFoundException
+				| ModuleNotFoundRuntimeException | StorageException e) {
+			throw new ModuleStartException(e.getMessage(), e);
+		}*/
 	}
 
 	@Override
@@ -142,7 +145,7 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 					loadedProvider.setManager(moduleManager);
 					loadedProvider.setModuleDefine(this.getModule());
 					
-					logger.info("Prepare the {} provider in {} module.", loadedProvider.name(), this.name());
+					log.info("Prepare the {} provider in {} module.", loadedProvider.name(), this.name());
 					try {
 						copyProperties(loadedProvider.createConfigBeanIfAbsent(),
 								configuration.getProviderConfiguration(loadedProvider.name()), this.name(), loadedProvider.name());
@@ -170,7 +173,7 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 					dependenciesProvider.add(loadedProvider);
 				}
 			} catch (Exception e) {
-				logger.error(e.getMessage(),e);
+				log.error(e.getMessage(),e);
 			}
 		}
 		
@@ -178,7 +181,7 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 		this.registerServiceImplementation(StorageDAO.class, new StorageDAOMixedImpl(getServiceCandidates(StorageDAO.class), config));
 		this.registerServiceImplementation(IBatchDAO.class, new IBatchDAOMixedImpl(getServiceCandidates(IBatchDAO.class)));
 		this.registerServiceImplementation(INetworkAddressAliasDAO.class, new INetworkAddressAliasDAOMixedImpl(config, getServiceCandidates(INetworkAddressAliasDAO.class)));
-		this.registerServiceImplementation(IMetadataQueryDAO.class, new IMetadataQueryDAOMixedImpl(getServiceCandidates(IMetadataQueryDAO.class)));
+		this.registerServiceImplementation(IMetadataQueryDAO.class, new IMetadataQueryDAOMixedImpl(config, getServiceCandidates(IMetadataQueryDAO.class)));
 		this.registerServiceImplementation(ITopologyQueryDAO.class, new ITopologyQueryDAOMixedImpl(config, getServiceCandidates(ITopologyQueryDAO.class)));
 		this.registerServiceImplementation(IMetricsQueryDAO.class, new IMetricsQueryDAOMixedImpl(config, getServiceCandidates(IMetricsQueryDAO.class)));
 		this.registerServiceImplementation(ITraceQueryDAO.class, new ITraceQueryDAOMixedImpl(config, getServiceCandidates(ITraceQueryDAO.class)));
@@ -241,7 +244,7 @@ public class StorageModuleMixedProvider extends ModuleProvider {
 				field.setAccessible(true);
 				field.set(dest, src.get(propertyName));
 			} catch (NoSuchFieldException e) {
-				logger.warn(propertyName + " setting is not supported in " + providerName + " provider of " + moduleName
+				log.warn(propertyName + " setting is not supported in " + providerName + " provider of " + moduleName
 						+ " module");
 			}
 		}

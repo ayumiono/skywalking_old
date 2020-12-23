@@ -49,7 +49,7 @@ public class ScriptParserTest {
     @Test
     public void testParse() throws IOException {
         ScriptParser parser = ScriptParser.createFromScriptText(
-            "Endpoint_avg = from(Endpoint.latency).longAvg(); //comment test" + "\n" + "Service_avg = from(Service.latency).longAvg()",
+            "endpoint_group_avg = from(EndpointGroup.latency).longAvg();",
             TEST_SOURCE_PACKAGE
         );
         List<AnalysisResult> results = parser.parse().getMetricsStmts();

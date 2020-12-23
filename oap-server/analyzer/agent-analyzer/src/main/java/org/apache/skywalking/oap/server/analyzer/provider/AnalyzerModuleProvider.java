@@ -19,7 +19,7 @@
 package org.apache.skywalking.oap.server.analyzer.provider;
 
 import java.util.List;
-import lombok.Getter;
+
 import org.apache.skywalking.oap.server.analyzer.module.AnalyzerModule;
 import org.apache.skywalking.oap.server.analyzer.provider.meter.config.MeterConfig;
 import org.apache.skywalking.oap.server.analyzer.provider.meter.config.MeterConfigs;
@@ -28,9 +28,12 @@ import org.apache.skywalking.oap.server.analyzer.provider.meter.process.MeterPro
 import org.apache.skywalking.oap.server.analyzer.provider.trace.DBLatencyThresholdsAndWatcher;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.TraceSampleRateWatcher;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.UninstrumentedGatewaysConfig;
+import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.IGroupParserService;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.ISegmentParserService;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.SegmentParserListenerManager;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.SegmentParserServiceImpl;
+import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.listener.GroupAnalysisListener;
+import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.listener.GroupProcessor;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.listener.MultiScopesAnalysisListener;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.listener.NetworkAddressAliasMappingListener;
 import org.apache.skywalking.oap.server.analyzer.provider.trace.parser.listener.SegmentAnalysisListener;
@@ -45,6 +48,8 @@ import org.apache.skywalking.oap.server.library.module.ModuleProvider;
 import org.apache.skywalking.oap.server.library.module.ModuleStartException;
 import org.apache.skywalking.oap.server.library.module.ServiceNotProvidedException;
 import org.apache.skywalking.oap.server.telemetry.TelemetryModule;
+
+import lombok.Getter;
 
 public class AnalyzerModuleProvider extends ModuleProvider {
     @Getter
@@ -99,6 +104,7 @@ public class AnalyzerModuleProvider extends ModuleProvider {
         meterConfigs = MeterConfigs.loadConfig(moduleConfig.getConfigPath());
         processService = new MeterProcessService(getManager());
         this.registerServiceImplementation(IMeterProcessService.class, processService);
+        this.registerServiceImplementation(IGroupParserService.class, new GroupProcessor(moduleConfig));
     }
 
     @Override
@@ -141,6 +147,7 @@ public class AnalyzerModuleProvider extends ModuleProvider {
         if (moduleConfig.isTraceAnalysis()) {
             listenerManager.add(new MultiScopesAnalysisListener.Factory(getManager()));
             listenerManager.add(new NetworkAddressAliasMappingListener.Factory(getManager()));
+            listenerManager.add(new GroupAnalysisListener.Factory(getManager()));
         }
         listenerManager.add(new SegmentAnalysisListener.Factory(getManager(), moduleConfig));
 

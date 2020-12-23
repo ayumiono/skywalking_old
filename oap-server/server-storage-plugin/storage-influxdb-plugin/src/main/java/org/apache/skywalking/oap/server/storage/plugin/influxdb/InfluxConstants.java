@@ -35,7 +35,10 @@ public interface InfluxConstants {
 
         String ID_COLUMN = "_id";
 
-        String NAME = "_name";
+        /**
+         * conflict with the influxdb internal tag _name, so change to __name
+         */
+        String NAME = "__name";
 
         String ENTITY_ID = "_entity_id";
 

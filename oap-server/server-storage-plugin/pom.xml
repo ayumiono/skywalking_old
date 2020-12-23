@@ -36,6 +36,7 @@
         <module>storage-influxdb-plugin</module>
 		<module>storage-prometheus-plugin</module>
 		<module>storage-mixed-plugin</module>
+		<module>storage-mixed2-plugin</module>
     </modules>
 
 </project>
