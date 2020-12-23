@@ -103,7 +103,8 @@ public class MultiScopesAnalysisListenerTest {
             new MockReceiver(),
             CONFIG,
             CACHE,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
         Assert.assertTrue(listener.containsPoint(AnalysisListener.Point.Entry));
         Assert.assertTrue(listener.containsPoint(AnalysisListener.Point.Local));
@@ -122,7 +123,8 @@ public class MultiScopesAnalysisListenerTest {
             mockReceiver,
             CONFIG,
             CACHE,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
 
         final long startTime = System.currentTimeMillis();
@@ -179,7 +181,8 @@ public class MultiScopesAnalysisListenerTest {
             mockReceiver,
             CONFIG,
             CACHE,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
 
         final long startTime = System.currentTimeMillis();
@@ -238,7 +241,8 @@ public class MultiScopesAnalysisListenerTest {
             mockReceiver,
             CONFIG,
             CACHE,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
 
         final long startTime = System.currentTimeMillis();
@@ -298,7 +302,8 @@ public class MultiScopesAnalysisListenerTest {
             mockReceiver,
             CONFIG,
             CACHE,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
 
         final long startTime = System.currentTimeMillis();
@@ -341,7 +346,8 @@ public class MultiScopesAnalysisListenerTest {
             mockReceiver,
             CONFIG,
             CACHE,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
 
         final long startTime = System.currentTimeMillis();
@@ -386,7 +392,8 @@ public class MultiScopesAnalysisListenerTest {
             mockReceiver,
             CONFIG,
             CACHE,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
 
         final long startTime = System.currentTimeMillis();
@@ -432,7 +439,8 @@ public class MultiScopesAnalysisListenerTest {
             mockReceiver,
             CONFIG,
             CACHE2,
-            NAMING_CONTROL
+            NAMING_CONTROL,
+            new MockGroupParser()
         );
 
         final long startTime = System.currentTimeMillis();
